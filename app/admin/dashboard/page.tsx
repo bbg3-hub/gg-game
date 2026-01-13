@@ -23,6 +23,18 @@ export default function AdminDashboard() {
     loadSessions(session.adminId);
   }, [router]);
 
+  // Auto-refresh sessions every 3 seconds to show new players joining
+  useEffect(() => {
+    const session = getAdminSession();
+    if (!session) return;
+
+    const refreshInterval = setInterval(() => {
+      loadSessions(session.adminId);
+    }, 3000);
+
+    return () => clearInterval(refreshInterval);
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       sessions.forEach((session) => {
@@ -152,11 +164,10 @@ export default function AdminDashboard() {
           {sessions.map((session) => (
             <div
               key={session.id}
-              className={`border-2 p-6 cursor-pointer transition-all ${
-                selectedSession?.id === session.id
+              className={`border-2 p-6 cursor-pointer transition-all ${selectedSession?.id === session.id
                   ? 'border-yellow-400 shadow-[0_0_20px_rgba(255,255,0,0.5)]'
                   : 'border-cyan-400 hover:border-yellow-400'
-              }`}
+                }`}
               onClick={() => setSelectedSession(session)}
             >
               <div className="space-y-3">

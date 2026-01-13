@@ -32,9 +32,8 @@ export default function JoinPage() {
         return;
       }
 
-      setSuccess(true);
-      setPlayerToken(data.playerToken);
-      setPlayerUrl(data.playerUrl);
+      // Directly navigate to game instead of showing copy link screen
+      router.push(`/game/play/${data.playerToken}`);
     } catch {
       setError('Failed to connect to server');
     } finally {
@@ -134,11 +133,10 @@ export default function JoinPage() {
             <button
               type="submit"
               disabled={loading}
-              className={`border-2 border-cyan-400 px-12 py-4 text-xl font-bold transition-all duration-200 ${
-                loading
+              className={`border-2 border-cyan-400 px-12 py-4 text-xl font-bold transition-all duration-200 ${loading
                   ? 'opacity-50 cursor-not-allowed'
                   : 'hover:bg-cyan-400 hover:text-black shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.8)]'
-              }`}
+                }`}
             >
               {loading ? 'CONNECTING...' : '>> CONNECT <<'}
             </button>
