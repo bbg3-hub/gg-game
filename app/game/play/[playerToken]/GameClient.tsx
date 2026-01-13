@@ -5,19 +5,44 @@ import { useRouter } from 'next/navigation';
 import { Player, formatTime, getRemainingTime, isGameOver, getGreekWord } from '@/lib/gameSession';
 
 type GameClientProps = {
-  initialPlayer: Player;
   playerToken: string;
 };
 
-export default function GameClient({ initialPlayer, playerToken }: GameClientProps) {
+export default function GameClient({ playerToken }: GameClientProps) {
   const router = useRouter();
-  const player = initialPlayer; // We use the prop as initial state, but we'll re-fetch for updates
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [showHelp, setShowHelp] = useState(false);
-  const [gamePlayer, setGamePlayer] = useState<Player>(initialPlayer);
+  const [gamePlayer, setGamePlayer] = useState<Player | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Poll for updates
+  // Initial fetch and polling for updates
   useEffect(() => {
+    const fetchPlayer = async () => {
+      try {
+        const response = await fetch(`/api/game/status?playerToken=${playerToken}`);
+        if (!response.ok) {
+          router.push('/');
+          return;
+        }
+        const data = await response.json();
+        if (data.player) {
+          setGamePlayer(data.player);
+          setLoading(false);
+        } else {
+          router.push('/');
+        }
+        if (data.session) {
+          const remaining = getRemainingTime(data.session);
+          setTimeRemaining(remaining);
+        }
+      } catch (error) {
+        console.error('Failed to fetch game status', error);
+        router.push('/');
+      }
+    };
+
+    fetchPlayer();
+
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`/api/game/status?playerToken=${playerToken}`);
@@ -29,9 +54,9 @@ export default function GameClient({ initialPlayer, playerToken }: GameClientPro
           if (data.session) {
             const remaining = getRemainingTime(data.session);
             setTimeRemaining(remaining);
-            
+
             if (isGameOver(data.session) && data.player.status !== 'completed') {
-               // We handle game over redirection here if needed, or rely on phase check
+              // We handle game over redirection here if needed, or rely on phase check
             }
           }
         }
@@ -41,9 +66,10 @@ export default function GameClient({ initialPlayer, playerToken }: GameClientPro
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [playerToken]);
+  }, [playerToken, router]);
 
   const getPhase = () => {
+    if (!gamePlayer) return 'morse';
     if (gamePlayer.status === 'completed') return 'complete';
     if (gamePlayer.bonusCompleted) return 'complete';
     if (gamePlayer.miniGameCompleted) return 'bonus';
@@ -51,6 +77,14 @@ export default function GameClient({ initialPlayer, playerToken }: GameClientPro
     if (gamePlayer.morseCompleted) return 'meaning';
     return 'morse';
   };
+
+  if (loading || !gamePlayer) {
+    return (
+      <div className="min-h-screen bg-black text-cyan-400 font-mono flex items-center justify-center">
+        <div className="text-2xl">CONNECTING...</div>
+      </div>
+    );
+  }
 
   const phase = getPhase();
 
@@ -192,9 +226,9 @@ function MorsePuzzle({ player, playerToken, showHelp, setShowHelp }: { player: P
     const dashDuration = dotDuration * 3;
     const gapDuration = dotDuration;
     const letterGap = dotDuration * 3;
-    
+
     let currentTime = audioContext.currentTime;
-    
+
     morse.split('').forEach((symbol) => {
       if (symbol === '.') {
         playTone(audioContext, currentTime, dotDuration);
@@ -211,17 +245,17 @@ function MorsePuzzle({ player, playerToken, showHelp, setShowHelp }: { player: P
   function playTone(audioContext: AudioContext, startTime: number, duration: number): void {
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     oscillator.frequency.value = 600;
     oscillator.type = 'sine';
-    
+
     gainNode.gain.setValueAtTime(0.3, startTime);
     gainNode.gain.setValueAtTime(0.3, startTime + duration / 1000);
     gainNode.gain.setValueAtTime(0, startTime + duration / 1000 + 0.01);
-    
+
     oscillator.start(startTime);
     oscillator.stop(startTime + duration / 1000 + 0.01);
   }
@@ -267,11 +301,10 @@ function MorsePuzzle({ player, playerToken, showHelp, setShowHelp }: { player: P
           <button
             onClick={handleSubmit}
             disabled={!answer.trim()}
-            className={`border-2 border-cyan-400 px-12 py-4 text-xl font-bold transition-all ${
-              answer.trim()
-                ? 'hover:bg-cyan-400 hover:text-black shadow-[0_0_15px_rgba(0,255,255,0.3)]'
-                : 'opacity-30 cursor-not-allowed'
-            }`}
+            className={`border-2 border-cyan-400 px-12 py-4 text-xl font-bold transition-all ${answer.trim()
+              ? 'hover:bg-cyan-400 hover:text-black shadow-[0_0_15px_rgba(0,255,255,0.3)]'
+              : 'opacity-30 cursor-not-allowed'
+              }`}
           >
             SUBMIT
           </button>
@@ -557,11 +590,10 @@ function BonusPuzzle({ playerToken }: { playerToken: string }) {
           <button
             onClick={handleSubmit}
             disabled={!q1Answer.trim() || !q2Answer.trim()}
-            className={`border-2 border-cyan-400 px-12 py-4 text-xl font-bold transition-all ${
-              q1Answer.trim() && q2Answer.trim()
-                ? 'hover:bg-cyan-400 hover:text-black shadow-[0_0_15px_rgba(0,255,255,0.3)]'
-                : 'opacity-30 cursor-not-allowed'
-            }`}
+            className={`border-2 border-cyan-400 px-12 py-4 text-xl font-bold transition-all ${q1Answer.trim() && q2Answer.trim()
+              ? 'hover:bg-cyan-400 hover:text-black shadow-[0_0_15px_rgba(0,255,255,0.3)]'
+              : 'opacity-30 cursor-not-allowed'
+              }`}
           >
             SUBMIT
           </button>
