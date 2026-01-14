@@ -28,7 +28,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
         }
         const data = await response.json();
         if (data.player) {
-          setGamePlayer(data.player);
+          setGamePlayer({ ...data.player });
           setLoading(false);
         } else {
           setErrorState('Mission aborted: Invalid credentials.');
@@ -53,7 +53,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
         if (response.ok) {
           const data = await response.json();
           if (data.player) {
-            setGamePlayer(data.player);
+            setGamePlayer({ ...data.player });
           }
           if (data.session) {
             const remaining = getRemainingTime(data.session);
