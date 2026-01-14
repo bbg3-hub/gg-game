@@ -14,6 +14,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [gamePlayer, setGamePlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorState, setErrorState] = useState<string | null>(null);
 
   // Initial fetch and polling for updates
   useEffect(() => {
@@ -21,7 +22,8 @@ export default function GameClient({ playerToken }: GameClientProps) {
       try {
         const response = await fetch(`/api/game/status?playerToken=${playerToken}`);
         if (!response.ok) {
-          router.push('/');
+          setErrorState('Mission aborted: Signal lost or session expired.');
+          setLoading(false);
           return;
         }
         const data = await response.json();
@@ -29,7 +31,8 @@ export default function GameClient({ playerToken }: GameClientProps) {
           setGamePlayer(data.player);
           setLoading(false);
         } else {
-          router.push('/');
+          setErrorState('Mission aborted: Invalid credentials.');
+          setLoading(false);
         }
         if (data.session) {
           const remaining = getRemainingTime(data.session);
@@ -37,7 +40,8 @@ export default function GameClient({ playerToken }: GameClientProps) {
         }
       } catch (error) {
         console.error('Failed to fetch game status', error);
-        router.push('/');
+        setErrorState('Mission aborted: Connection failure.');
+        setLoading(false);
       }
     };
 
@@ -77,6 +81,23 @@ export default function GameClient({ playerToken }: GameClientProps) {
     if (gamePlayer.morseCompleted) return 'meaning';
     return 'morse';
   };
+
+  if (errorState) {
+    return (
+      <div className="min-h-screen bg-black text-red-500 font-mono flex flex-col items-center justify-center p-4">
+        <div className="max-w-2xl w-full space-y-8 text-center">
+          <div className="text-3xl font-bold border-b border-red-500 pb-4">SIGNAL LOST</div>
+          <div className="text-xl">{errorState}</div>
+          <button
+            onClick={() => router.push('/')}
+            className="border-2 border-red-500 px-8 py-3 hover:bg-red-500 hover:text-black transition-all"
+          >
+            RETURN TO BASE
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !gamePlayer) {
     return (
