@@ -214,7 +214,7 @@ function MorsePuzzle({ player, playerToken, showHelp, setShowHelp }: { player: P
     if (data.correct) {
       setSuccess(true);
       setTimeout(() => {
-        window.location.reload();
+        setSuccess(false);
       }, 2000);
     } else {
       setError(`Incorrect. Attempts: ${data.attempts}/${data.maxAttempts}`);
@@ -383,7 +383,7 @@ function MeaningPuzzle({ player, playerToken }: { player: Player; playerToken: s
     if (data.correct) {
       setSuccess(true);
       setTimeout(() => {
-        window.location.reload();
+        setSuccess(false);
       }, 2000);
     } else {
       setError(`Incorrect. Attempts: ${data.attempts}/${data.maxAttempts}`);
@@ -483,7 +483,7 @@ function MiniGame({ playerToken }: { playerToken: string }) {
     if (response.ok) {
       setSuccess(true);
       setTimeout(() => {
-        window.location.reload();
+        setSuccess(false);
       }, 2000);
     }
   };
@@ -560,7 +560,7 @@ function BonusPuzzle({ playerToken }: { playerToken: string }) {
     if (response.ok) {
       setSuccess(true);
       setTimeout(() => {
-        window.location.reload();
+        setSuccess(false);
       }, 2000);
     } else {
       setError('Failed to submit answers');
