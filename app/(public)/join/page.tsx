@@ -30,7 +30,7 @@ export default function JoinPage() {
       }
 
       // Directly navigate to game instead of showing copy link screen
-      router.push(`/game/play/${data.playerToken}`);
+      router.push(`/game/play/${encodeURIComponent(data.playerToken)}`);
     } catch {
       setError('Failed to connect to server');
     } finally {

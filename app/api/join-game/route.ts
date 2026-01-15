@@ -25,16 +25,32 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const playerUrl = `${baseUrl}/game/play/${result.playerToken}`;
 
-    return NextResponse.json({
-      success: true,
-      playerToken: result.playerToken,
-      playerUrl,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        playerToken: result.playerToken,
+        playerUrl,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': 'inline',
+        },
+      }
+    );
   } catch (error) {
     console.error('Join game error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': 'inline',
+        },
+      }
     );
   }
 }

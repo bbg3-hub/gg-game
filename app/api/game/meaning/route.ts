@@ -15,17 +15,31 @@ export async function POST(request: NextRequest) {
 
     const result = submitMeaningAnswer(playerToken, answer);
 
-    return NextResponse.json({
-      success: true,
-      correct: result.correct,
-      attempts: result.attempts,
-      maxAttempts: result.maxAttempts,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        correct: result.correct,
+        attempts: result.attempts,
+        maxAttempts: result.maxAttempts,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      }
+    );
   } catch (error) {
     console.error('Meaning answer error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      }
     );
   }
 }
