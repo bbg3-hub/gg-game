@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlayerByToken } from '@/lib/gameSession';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const playerToken = searchParams.get('playerToken');
@@ -12,8 +14,27 @@ export async function GET(request: NextRequest) {
     const { player, session } = getPlayerByToken(playerToken);
 
     if (!player || !session) {
-        return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+        return NextResponse.json(
+            { error: 'Player not found' },
+            { 
+                status: 404,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Content-Type-Options': 'nosniff',
+                    'Content-Disposition': 'inline'
+                }
+            }
+        );
     }
 
-    return NextResponse.json({ player, session });
+    return NextResponse.json(
+        { player, session },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Content-Type-Options': 'nosniff',
+                'Content-Disposition': 'inline'
+            }
+        }
+    );
 }

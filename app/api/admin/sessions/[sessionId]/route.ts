@@ -20,16 +20,39 @@ export async function DELETE(
     if (!success) {
       return NextResponse.json(
         { error: 'Session not found' },
-        { status: 404 }
+        { 
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Disposition': 'inline',
+          }
+        }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': 'inline',
+        }
+      }
+    );
   } catch (error) {
     console.error('Delete session error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': 'inline',
+        }
+      }
     );
   }
 }

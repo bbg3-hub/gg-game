@@ -15,21 +15,37 @@ export async function POST(request: NextRequest) {
 
     const session = createGameSession(adminId);
 
-    return NextResponse.json({
-      success: true,
-      session: {
-        id: session.id,
-        gameCode: session.gameCode,
-        adminId: session.adminId,
-        status: session.status,
-        oxygenMinutes: session.oxygenMinutes,
+    return NextResponse.json(
+      {
+        success: true,
+        session: {
+          id: session.id,
+          gameCode: session.gameCode,
+          adminId: session.adminId,
+          status: session.status,
+          oxygenMinutes: session.oxygenMinutes,
+        },
       },
-    });
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': 'inline',
+        },
+      }
+    );
   } catch (error) {
     console.error('Create game error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': 'inline',
+        },
+      }
     );
   }
 }

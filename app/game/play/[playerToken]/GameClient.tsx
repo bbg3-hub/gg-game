@@ -20,7 +20,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
-        const response = await fetch(`/api/game/status?playerToken=${playerToken}`);
+        const response = await fetch(`/api/game/status?playerToken=${encodeURIComponent(playerToken)}`);
         if (!response.ok) {
           setErrorState('Mission aborted: Signal lost or session expired.');
           setLoading(false);
@@ -49,7 +49,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/game/status?playerToken=${playerToken}`);
+        const response = await fetch(`/api/game/status?playerToken=${encodeURIComponent(playerToken)}`);
         if (response.ok) {
           const data = await response.json();
           if (data.player) {
