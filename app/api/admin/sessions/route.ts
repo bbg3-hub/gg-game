@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllAdminSessions } from '@/lib/gameSession';
+import { getAllAdminSessions } from '@/lib/gameSessionStore';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,6 +27,12 @@ export async function GET(request: NextRequest) {
           oxygenMinutes: session.oxygenMinutes,
           status: session.status,
           finalEscapeCode: session.finalEscapeCode,
+          createdAt: session.createdAt,
+          customMorseWords: session.customMorseWords,
+          customGreekWords: session.customGreekWords,
+          customMaxMorseAttempts: session.customMaxMorseAttempts,
+          customMaxMeaningAttempts: session.customMaxMeaningAttempts,
+          customOxygenMinutes: session.customOxygenMinutes,
         })),
       },
       {

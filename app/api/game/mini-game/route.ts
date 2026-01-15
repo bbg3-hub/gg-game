@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { submitMiniGameScore } from '@/lib/gameSession';
+import { submitMiniGameScore } from '@/lib/gameSessionStore';
 
 export async function POST(request: NextRequest) {
   try {

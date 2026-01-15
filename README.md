@@ -5,10 +5,13 @@ A collaborative escape experience set on a space station where 1-4 players must 
 ## Features
 
 - **Admin Dashboard**: Create and manage game sessions, monitor player progress in real-time
+- **Puzzle Customization**: Admins can customize morse words, Greek words, attempt limits, and oxygen timer per session
+- **Session Persistence**: Game sessions persist across server restarts using file-based storage
 - **Private Player Screens**: Each player gets a unique URL with their own private puzzle flow
 - **Sequential Puzzles**: Morse code → Greek meaning → Mini-game → Bonus questions
 - **Real-time Progress**: Admin can see all players' progress, scores, and oxygen timer
 - **Flexible Join**: Players can join at different times within the oxygen timer
+- **Export/Backup**: Export all sessions and puzzle configurations as JSON backup
 - **Cryptic Interface**: Minimal, mystery-filled design with no spoilers
 
 ## Getting Started
@@ -49,9 +52,16 @@ npm run dev
 
 1. Go to `/admin` and log in with your password
 2. Click "Create New Mission" to generate a game code
-3. Share the 6-digit game code with players
-4. Monitor progress on the dashboard
-5. View final escape code when all players complete
+3. (Optional) Click "Edit Puzzles" to customize:
+   - Morse code words
+   - Greek words and meanings
+   - Maximum attempts for puzzles
+   - Oxygen timer duration
+4. Share the 6-digit game code with players
+5. Monitor progress on the dashboard
+6. View final escape code when all players complete
+7. Export/backup sessions using "Export Backup" button
+8. Duplicate sessions with puzzle settings using "Duplicate"
 
 ### For Players
 
@@ -156,10 +166,12 @@ This project can be deployed on any platform that supports Next.js:
 
 ## Notes
 
-- Sessions are stored in memory and reset when the server restarts
-- For production, consider using a database (Redis, PostgreSQL, etc.)
-- The in-memory storage is suitable for development and testing
+- Sessions are persisted to disk in `data/sessions.json`
+- File-based storage is suitable for development and testing
+- For production with high concurrency, consider using a database (Redis, PostgreSQL, etc.)
 - Admin authentication is simple - consider NextAuth.js for production
+- Custom puzzle settings persist across server restarts
+- Sessions are sorted by creation time (newest first)
 
 ## License
 

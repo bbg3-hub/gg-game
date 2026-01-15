@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Player, formatTime, getRemainingTime, isGameOver, getGreekWord } from '@/lib/gameSession';
+import { Player, formatTime, getRemainingTime, isGameOver } from '@/lib/gameSession';
 
 type GameClientProps = {
   playerToken: string;
+};
+
+type SessionData = {
+  id: string;
+  startTime: number | null;
+  oxygenMinutes: number;
+  status: string;
+  meaningWord?: string;
+  meaningOptions?: string[];
 };
 
 export default function GameClient({ playerToken }: GameClientProps) {
@@ -13,6 +22,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [showHelp, setShowHelp] = useState(false);
   const [gamePlayer, setGamePlayer] = useState<Player | null>(null);
+  const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorState, setErrorState] = useState<string | null>(null);
 
@@ -35,6 +45,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
           setLoading(false);
         }
         if (data.session) {
+          setSessionData(data.session);
           const remaining = getRemainingTime(data.session);
           setTimeRemaining(remaining);
         }
@@ -56,6 +67,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
             setGamePlayer({ ...data.player });
           }
           if (data.session) {
+            setSessionData(data.session);
             const remaining = getRemainingTime(data.session);
             setTimeRemaining(remaining);
 
@@ -162,7 +174,7 @@ export default function GameClient({ playerToken }: GameClientProps) {
               <div className="text-sm opacity-70">Choose the correct interpretation</div>
             </div>
 
-            <MeaningPuzzle player={gamePlayer} playerToken={playerToken} />
+            <MeaningPuzzle player={gamePlayer} playerToken={playerToken} sessionData={sessionData} />
           </div>
         )}
 
@@ -355,21 +367,40 @@ function MorsePuzzle({ player, playerToken, showHelp, setShowHelp }: { player: P
   );
 }
 
-function MeaningPuzzle({ player, playerToken }: { player: Player; playerToken: string }) {
+function MeaningPuzzle({
+  playerToken,
+  sessionData,
+}: {
+  player: Player;
+  playerToken: string;
+  sessionData: SessionData | null;
+}) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const greekWord = getGreekWord(player.greekWordIndex);
+  const meaningWord = sessionData?.meaningWord;
+  const meaningOptions = sessionData?.meaningOptions;
 
-  const allOptions = [
-    greekWord.meaning,
-    'word, reason, principle',
-    'soul, spirit, breath',
-    'sky, heaven, upper air',
-    'time, season, opportunity',
-  ];
+  const options = useMemo(() => {
+    if (!meaningOptions || meaningOptions.length === 0) return [];
 
-  const [options] = useState(() => [...allOptions].sort(() => Math.random() - 0.5));
+    const hash = (input: string) => {
+      let h = 0;
+      for (let i = 0; i < input.length; i++) {
+        h = (h << 5) - h + input.charCodeAt(i);
+        h |= 0;
+      }
+      return h;
+    };
+
+    const seed = `${playerToken}:${meaningWord}`;
+
+    return [...meaningOptions].sort((a, b) => {
+      const ha = hash(`${seed}:${a}`);
+      const hb = hash(`${seed}:${b}`);
+      return ha - hb;
+    });
+  }, [meaningOptions, meaningWord, playerToken]);
 
   const handleSubmit = async (selected: string) => {
     const response = await fetch('/api/game/meaning', {
@@ -390,6 +421,14 @@ function MeaningPuzzle({ player, playerToken }: { player: Player; playerToken: s
     }
   };
 
+  if (!meaningWord || options.length === 0) {
+    return (
+      <div className="min-h-[200px] flex items-center justify-center opacity-70">
+        LOADING TRANSLATION...
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="text-center space-y-4">
@@ -402,13 +441,9 @@ function MeaningPuzzle({ player, playerToken }: { player: Player; playerToken: s
   return (
     <div className="space-y-6">
       <div className="border-2 border-cyan-400 p-8 space-y-6">
-        <div className="text-center text-4xl font-bold mb-8">
-          {greekWord.word}
-        </div>
+        <div className="text-center text-4xl font-bold mb-8">{meaningWord}</div>
 
-        <div className="text-center text-sm opacity-70 mb-8">
-          Select the meaning
-        </div>
+        <div className="text-center text-sm opacity-70 mb-8">Select the meaning</div>
 
         <div className="space-y-3">
           {options.map((option, index) => (
@@ -422,9 +457,7 @@ function MeaningPuzzle({ player, playerToken }: { player: Player; playerToken: s
           ))}
         </div>
 
-        {error && (
-          <div className="text-red-500 text-sm text-center">{error}</div>
-        )}
+        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
       </div>
     </div>
   );
