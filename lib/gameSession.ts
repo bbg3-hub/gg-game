@@ -1,3 +1,8 @@
+export interface GreekWord {
+  word: string;
+  meaning: string;
+}
+
 export interface Player {
   token: string;
   name: string;
@@ -26,253 +31,60 @@ export interface GameSession {
   oxygenMinutes: number;
   status: 'waiting' | 'active' | 'completed';
   finalEscapeCode: string;
+  createdAt: number;
+  customMorseWords?: string[];
+  customGreekWords?: GreekWord[];
+  customMaxMorseAttempts?: number;
+  customMaxMeaningAttempts?: number;
+  customOxygenMinutes?: number;
 }
 
-const GREEK_WORDS = [
+export const DEFAULT_GREEK_WORDS: GreekWord[] = [
   { word: 'LOGOS', meaning: 'word, reason, principle' },
   { word: 'PSYCHE', meaning: 'soul, spirit, breath' },
   { word: 'AETHER', meaning: 'sky, heaven, upper air' },
   { word: 'KAIROS', meaning: 'time, season, opportunity' },
 ];
 
-const MORSE_WORDS = ['SOS', 'HELP', 'ESCAPE', 'OXYGEN', 'ALERT', 'DANGER', 'RESCUE', 'URGENT'];
+export const DEFAULT_MORSE_WORDS = ['SOS', 'HELP', 'ESCAPE', 'OXYGEN', 'ALERT', 'DANGER', 'RESCUE', 'URGENT'];
 
-const MAX_PLAYERS = 4;
-const MAX_MORSE_ATTEMPTS = 5;
-const MAX_MEANING_ATTEMPTS = 5;
+export const DEFAULT_MAX_MORSE_ATTEMPTS = 5;
+export const DEFAULT_MAX_MEANING_ATTEMPTS = 5;
+export const DEFAULT_OXYGEN_MINUTES = 120;
 
-// In-memory storage (in production, use a database)
-const sessions = new Map<string, GameSession>();
-const gameCodeToId = new Map<string, string>();
-const playerTokenToGameId = new Map<string, string>();
-
-function generateGameCode(): string {
-  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += letters[Math.floor(Math.random() * letters.length)];
-  }
-  return code;
+export function getEffectiveMorseWords(session: Pick<GameSession, 'customMorseWords'>): string[] {
+  if (session.customMorseWords && session.customMorseWords.length > 0) return session.customMorseWords;
+  return DEFAULT_MORSE_WORDS;
 }
 
-function generatePlayerToken(): string {
-  return `player-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+export function getEffectiveGreekWords(session: Pick<GameSession, 'customGreekWords'>): GreekWord[] {
+  if (session.customGreekWords && session.customGreekWords.length > 0) return session.customGreekWords;
+  return DEFAULT_GREEK_WORDS;
 }
 
-export function createGameSession(adminId: string): GameSession {
-  const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  let gameCode = generateGameCode();
-  
-  // Ensure unique game code
-  while (gameCodeToId.has(gameCode)) {
-    gameCode = generateGameCode();
-  }
-
-  const session: GameSession = {
-    id: sessionId,
-    gameCode,
-    adminId,
-    players: [],
-    startTime: null,
-    oxygenMinutes: 120,
-    status: 'waiting',
-    finalEscapeCode: '',
-  };
-
-  sessions.set(sessionId, session);
-  gameCodeToId.set(gameCode, sessionId);
-
-  return session;
+export function getEffectiveMaxMorseAttempts(session: Pick<GameSession, 'customMaxMorseAttempts'>): number {
+  const value = session.customMaxMorseAttempts;
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
+  return DEFAULT_MAX_MORSE_ATTEMPTS;
 }
 
-export function getGameSession(sessionId: string): GameSession | null {
-  return sessions.get(sessionId) || null;
+export function getEffectiveMaxMeaningAttempts(session: Pick<GameSession, 'customMaxMeaningAttempts'>): number {
+  const value = session.customMaxMeaningAttempts;
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
+  return DEFAULT_MAX_MEANING_ATTEMPTS;
 }
 
-export function getGameSessionByCode(gameCode: string): GameSession | null {
-  const sessionId = gameCodeToId.get(gameCode);
-  if (!sessionId) return null;
-  return sessions.get(sessionId) || null;
+export function getEffectiveOxygenMinutes(session: Pick<GameSession, 'oxygenMinutes' | 'customOxygenMinutes'>): number {
+  const value = session.customOxygenMinutes;
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
+  return session.oxygenMinutes;
 }
 
-export function joinGame(gameCode: string, playerName: string): { success: boolean; playerToken?: string; error?: string } {
-  const session = getGameSessionByCode(gameCode);
-  if (!session) {
-    return { success: false, error: 'Invalid game code' };
-  }
-
-  if (session.status === 'completed') {
-    return { success: false, error: 'This game has already ended' };
-  }
-
-  if (session.players.length >= MAX_PLAYERS) {
-    return { success: false, error: 'Game is full (maximum 4 players)' };
-  }
-
-  const playerId = session.players.length;
-  const morseWord = MORSE_WORDS[playerId % MORSE_WORDS.length];
-  const greekWordIndex = playerId % GREEK_WORDS.length;
-
-  const player: Player = {
-    token: generatePlayerToken(),
-    name: playerName,
-    playerId,
-    status: 'joined',
-    morseAttempts: 0,
-    morseCompleted: false,
-    meaningAttempts: 0,
-    meaningCompleted: false,
-    miniGameScore: 0,
-    miniGameCompleted: false,
-    bonusQ1Correct: false,
-    bonusQ2Correct: false,
-    bonusCompleted: false,
-    totalScore: 0,
-    morseWord,
-    greekWordIndex,
-  };
-
-  session.players.push(player);
-  playerTokenToGameId.set(player.token, session.id);
-
-  // Start the game when first player joins
-  if (session.startTime === null) {
-    session.startTime = Date.now();
-    session.status = 'active';
-  }
-
-  return { success: true, playerToken: player.token };
-}
-
-export function getPlayerByToken(playerToken: string): { player: Player | null; session: GameSession | null } {
-  const sessionId = playerTokenToGameId.get(playerToken);
-  if (!sessionId) {
-    return { player: null, session: null };
-  }
-
-  const session = sessions.get(sessionId);
-  if (!session) {
-    return { player: null, session: null };
-  }
-
-  const player = session.players.find((p) => p.token === playerToken);
-  if (!player) {
-    return { player: null, session: null };
-  }
-
-  return { player, session };
-}
-
-export function updatePlayerProgress(playerToken: string, updates: Partial<Player>): boolean {
-  const { player, session } = getPlayerByToken(playerToken);
-  if (!player || !session) return false;
-
-  const playerIndex = session.players.findIndex((p) => p.token === playerToken);
-  if (playerIndex === -1) return false;
-
-  session.players[playerIndex] = { ...player, ...updates };
-
-  // Recalculate total score
-  const updatedPlayer = session.players[playerIndex];
-  const morseScore = updatedPlayer.morseCompleted ? Math.max(0, 250 - (updatedPlayer.morseAttempts - 1) * 50) : 0;
-  const meaningScore = updatedPlayer.meaningCompleted ? Math.max(0, 250 - (updatedPlayer.meaningAttempts - 1) * 50) : 0;
-  const miniGameScore = updatedPlayer.miniGameCompleted ? updatedPlayer.miniGameScore : 0;
-  const bonusScore = updatedPlayer.bonusCompleted ? 200 : 0;
-  updatedPlayer.totalScore = morseScore + meaningScore + miniGameScore + bonusScore;
-
-  // Check if all players are complete
-  const allComplete = session.players.every((p) => 
-    p.morseCompleted && p.meaningCompleted && p.miniGameCompleted && p.bonusCompleted
-  );
-
-  if (allComplete && session.finalEscapeCode === '') {
-    // Generate final escape code
-    const digits = [];
-    for (let i = 0; i < 4; i++) {
-      digits.push(Math.floor(Math.random() * 10));
-    }
-    session.finalEscapeCode = digits.join('');
-  }
-
-  return true;
-}
-
-export function submitMorseAnswer(playerToken: string, answer: string): { correct: boolean; attempts: number; maxAttempts: number } {
-  const { player, session } = getPlayerByToken(playerToken);
-  if (!player || !session) return { correct: false, attempts: 0, maxAttempts: MAX_MORSE_ATTEMPTS };
-
-  if (player.morseCompleted) {
-    return { correct: true, attempts: player.morseAttempts, maxAttempts: MAX_MORSE_ATTEMPTS };
-  }
-
-  if (player.morseAttempts >= MAX_MORSE_ATTEMPTS) {
-    return { correct: false, attempts: player.morseAttempts, maxAttempts: MAX_MORSE_ATTEMPTS };
-  }
-
-  const attempts = player.morseAttempts + 1;
-  const correct = answer.toUpperCase() === player.morseWord;
-
-  updatePlayerProgress(playerToken, {
-    morseAttempts: attempts,
-    morseCompleted: correct,
-  });
-
-  return { correct, attempts, maxAttempts: MAX_MORSE_ATTEMPTS };
-}
-
-export function submitMeaningAnswer(playerToken: string, answer: string): { correct: boolean; attempts: number; maxAttempts: number } {
-  const { player, session } = getPlayerByToken(playerToken);
-  if (!player || !session) return { correct: false, attempts: 0, maxAttempts: MAX_MEANING_ATTEMPTS };
-
-  if (!player.morseCompleted) {
-    return { correct: false, attempts: 0, maxAttempts: MAX_MEANING_ATTEMPTS };
-  }
-
-  if (player.meaningCompleted) {
-    return { correct: true, attempts: player.meaningAttempts, maxAttempts: MAX_MEANING_ATTEMPTS };
-  }
-
-  if (player.meaningAttempts >= MAX_MEANING_ATTEMPTS) {
-    return { correct: false, attempts: player.meaningAttempts, maxAttempts: MAX_MEANING_ATTEMPTS };
-  }
-
-  const attempts = player.meaningAttempts + 1;
-  const correct = answer === GREEK_WORDS[player.greekWordIndex].meaning;
-
-  updatePlayerProgress(playerToken, {
-    meaningAttempts: attempts,
-    meaningCompleted: correct,
-  });
-
-  return { correct, attempts, maxAttempts: MAX_MEANING_ATTEMPTS };
-}
-
-export function submitMiniGameScore(playerToken: string, score: number): boolean {
-  const { player } = getPlayerByToken(playerToken);
-  if (!player || !player.meaningCompleted) return false;
-
-  return updatePlayerProgress(playerToken, {
-    miniGameScore: score,
-    miniGameCompleted: true,
-  });
-}
-
-export function submitBonusAnswers(playerToken: string, q1Correct: boolean, q2Correct: boolean): boolean {
-  const { player } = getPlayerByToken(playerToken);
-  if (!player || !player.miniGameCompleted) return false;
-
-  return updatePlayerProgress(playerToken, {
-    bonusQ1Correct: q1Correct,
-    bonusQ2Correct: q2Correct,
-    bonusCompleted: true,
-    status: 'completed',
-  });
-}
-
-export function getRemainingTime(session: GameSession): number {
-  if (!session.startTime) return session.oxygenMinutes * 60 * 1000;
+export function getRemainingTime(session: Pick<GameSession, 'startTime' | 'oxygenMinutes' | 'customOxygenMinutes'>): number {
+  const oxygenMinutes = getEffectiveOxygenMinutes(session);
+  if (!session.startTime) return oxygenMinutes * 60 * 1000;
   const elapsed = Date.now() - session.startTime;
-  const remaining = session.oxygenMinutes * 60 * 1000 - elapsed;
+  const remaining = oxygenMinutes * 60 * 1000 - elapsed;
   return Math.max(0, remaining);
 }
 
@@ -283,28 +95,20 @@ export function formatTime(milliseconds: number): string {
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
-export function isGameOver(session: GameSession): boolean {
+export function isGameOver(session: Pick<GameSession, 'startTime' | 'oxygenMinutes' | 'customOxygenMinutes' | 'status'>): boolean {
   return getRemainingTime(session) <= 0 || session.status === 'completed';
 }
 
-export function getGreekWord(index: number) {
-  return GREEK_WORDS[index % GREEK_WORDS.length];
+export function getGreekWord(index: number, greekWords: GreekWord[] = DEFAULT_GREEK_WORDS) {
+  return greekWords[index % greekWords.length];
 }
 
-export function getAllAdminSessions(adminId: string): GameSession[] {
-  return Array.from(sessions.values()).filter((s) => s.adminId === adminId);
-}
-
-export function deleteSession(sessionId: string): boolean {
-  const session = sessions.get(sessionId);
-  if (!session) return false;
-
-  // Clean up player token mappings
-  session.players.forEach((player) => {
-    playerTokenToGameId.delete(player.token);
-  });
-
-  gameCodeToId.delete(session.gameCode);
-  sessions.delete(sessionId);
-  return true;
+export function hasCustomPuzzles(session: GameSession): boolean {
+  return Boolean(
+    (session.customMorseWords && session.customMorseWords.length > 0) ||
+      (session.customGreekWords && session.customGreekWords.length > 0) ||
+      typeof session.customMaxMorseAttempts === 'number' ||
+      typeof session.customMaxMeaningAttempts === 'number' ||
+      typeof session.customOxygenMinutes === 'number'
+  );
 }

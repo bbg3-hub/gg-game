@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlayerByToken } from '@/lib/gameSession';
+import { getPlayerByToken } from '@/lib/gameSessionStore';
+import { getEffectiveGreekWords, getEffectiveOxygenMinutes } from '@/lib/gameSession';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,8 +28,23 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    const greekWords = getEffectiveGreekWords(session);
+    const greekWordIndex = player.greekWordIndex % greekWords.length;
+    const meaningWord = greekWords[greekWordIndex]?.word;
+    const meaningOptions = greekWords.map((w) => w.meaning);
+
     return NextResponse.json(
-        { player, session },
+        {
+            player,
+            session: {
+                id: session.id,
+                startTime: session.startTime,
+                oxygenMinutes: getEffectiveOxygenMinutes(session),
+                status: session.status,
+                meaningWord,
+                meaningOptions,
+            },
+        },
         {
             headers: {
                 'Content-Type': 'application/json',

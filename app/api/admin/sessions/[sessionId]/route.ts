@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteSession } from '@/lib/gameSession';
+import { deleteSession } from '@/lib/gameSessionStore';
 
 export async function DELETE(
   request: NextRequest,
