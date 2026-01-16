@@ -266,6 +266,12 @@ export default function AdminDashboard() {
             </div>
             <div className="flex gap-3 flex-wrap">
               <button
+                onClick={() => router.push('/admin/game-builder')}
+                className="border border-cyan-400 px-6 py-3 font-bold hover:bg-cyan-400 hover:text-black transition-all"
+              >
+                [GAME BUILDER]
+              </button>
+              <button
                 onClick={handleExport}
                 className="border border-yellow-400 px-6 py-3 font-bold hover:bg-yellow-400 hover:text-black transition-all"
               >

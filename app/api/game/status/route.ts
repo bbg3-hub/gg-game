@@ -43,6 +43,9 @@ export async function GET(request: NextRequest) {
                 status: session.status,
                 meaningWord,
                 meaningOptions,
+                phases: session.phases,
+                title: session.title,
+                description: session.description,
             },
         },
         {

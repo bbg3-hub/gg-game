@@ -409,3 +409,37 @@ export function exportAdminSessions(adminId: string): GameSession[] {
   loadFromDiskOnce();
   return getAllAdminSessions(adminId);
 }
+
+type BuilderUpdate = {
+  phases?: GameSession['phases'];
+  title?: string;
+  description?: string;
+  settings?: GameSession['settings'];
+};
+
+export function updateSessionWithBuilder(sessionId: string, adminId: string, update: BuilderUpdate): GameSession | null {
+  loadFromDiskOnce();
+
+  const session = sessions.get(sessionId);
+  if (!session) return null;
+  if (session.adminId !== adminId) return null;
+
+  if (Object.prototype.hasOwnProperty.call(update, 'phases')) {
+    session.phases = update.phases;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(update, 'title')) {
+    session.title = update.title;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(update, 'description')) {
+    session.description = update.description;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(update, 'settings')) {
+    session.settings = update.settings;
+  }
+
+  saveToDisk();
+  return session;
+}

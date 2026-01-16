@@ -3,6 +3,41 @@ export interface GreekWord {
   meaning: string;
 }
 
+export interface QuestionOption {
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface Question {
+  id: string;
+  type: 'text' | 'multiple-choice' | 'open-response';
+  title: string;
+  content: string;
+  solution: string;
+  options?: QuestionOption[];
+  difficulty: 'easy' | 'medium' | 'hard';
+  points: number;
+  timeLimit?: number;
+  maxAttempts?: number;
+  hints?: string[];
+}
+
+export interface GamePhase {
+  id: string;
+  name: string;
+  description: string;
+  questions: Question[];
+  order: number;
+}
+
+export interface PlayerQuestionProgress {
+  questionId: string;
+  attempts: number;
+  completed: boolean;
+  correct: boolean;
+  score: number;
+}
+
 export interface Player {
   token: string;
   name: string;
@@ -20,6 +55,9 @@ export interface Player {
   totalScore: number;
   morseWord: string;
   greekWordIndex: number;
+  questionProgress?: PlayerQuestionProgress[];
+  currentPhaseIndex?: number;
+  currentQuestionIndex?: number;
 }
 
 export interface GameSession {
@@ -37,6 +75,13 @@ export interface GameSession {
   customMaxMorseAttempts?: number;
   customMaxMeaningAttempts?: number;
   customOxygenMinutes?: number;
+  phases?: GamePhase[];
+  title?: string;
+  description?: string;
+  settings?: {
+    oxygenMinutes: number;
+    maxPlayers: number;
+  };
 }
 
 export const DEFAULT_GREEK_WORDS: GreekWord[] = [
