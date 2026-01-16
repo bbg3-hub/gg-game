@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Player, formatTime, getRemainingTime, isGameOver } from '@/lib/gameSession';
+import { Player, formatTime, getRemainingTime, isGameOver, GamePhase } from '@/lib/gameSession';
+import DynamicGamePlayer from '@/components/DynamicGamePlayer';
 
 type GameClientProps = {
   playerToken: string;
@@ -15,6 +16,9 @@ type SessionData = {
   status: string;
   meaningWord?: string;
   meaningOptions?: string[];
+  phases?: GamePhase[];
+  title?: string;
+  description?: string;
 };
 
 export default function GameClient({ playerToken }: GameClientProps) {
@@ -116,6 +120,17 @@ export default function GameClient({ playerToken }: GameClientProps) {
       <div className="min-h-screen bg-black text-cyan-400 font-mono flex items-center justify-center">
         <div className="text-2xl">CONNECTING...</div>
       </div>
+    );
+  }
+
+  if (sessionData?.phases && sessionData.phases.length > 0) {
+    return (
+      <DynamicGamePlayer
+        player={gamePlayer}
+        session={sessionData as SessionData & { phases: GamePhase[] }}
+        playerToken={playerToken}
+        timeRemaining={timeRemaining}
+      />
     );
   }
 
