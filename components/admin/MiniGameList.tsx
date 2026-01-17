@@ -60,7 +60,7 @@ export default function MiniGameList({ adminId }: MiniGameListProps) {
         // Apply search filter
         if (filter.search) {
           const searchTerm = filter.search.toLowerCase();
-          filteredGames = filteredGames.filter(game =>
+          filteredGames = filteredGames.filter((game: MiniGameConfig) =>
             game.title.toLowerCase().includes(searchTerm) ||
             game.description.toLowerCase().includes(searchTerm)
           );

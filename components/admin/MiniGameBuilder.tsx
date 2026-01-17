@@ -122,8 +122,7 @@ export default function MiniGameBuilder({ adminId, onSave, initialData, mode }: 
       scoringSystem: defaultConfig.scoringSystem,
       visualTheme: defaultConfig.visualTheme,
       successThreshold: defaultConfig.successThreshold,
-      // Config will be set based on the specific game type
-      config: (defaultConfig as any).config || {},
+      config: defaultConfig.config,
     }));
   }, []);
 

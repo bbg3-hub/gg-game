@@ -114,7 +114,7 @@ export class PersistenceManager {
     const savedGame: SavedGameState = {
       id: existingIndex >= 0 ? savedGames[existingIndex].id : generateId(),
       sessionId: session.id,
-      playerId: session.playerName || 'unknown',
+      playerId: session.players[0]?.name || 'unknown',
       adminId,
       gameData,
       metadata,
@@ -223,7 +223,7 @@ export class PersistenceManager {
   static listBackups(adminId: string): BackupData[] {
     return backups
       .filter(b => b.adminId === adminId)
-      .sort((a, b) => b.createdAt - a.createdAt);
+      .sort((a, b) => b.metadata.createdAt - a.metadata.createdAt);
   }
   
   // Restore from backup
@@ -401,7 +401,26 @@ export class AutoSaveManager {
       const metadata = getMetadata();
       
       // Get the session (would need to be passed or retrieved)
-      const session = { id: sessionId, playerName: 'unknown' } as GameSession;
+      const session: GameSession = {
+        id: sessionId,
+        gameCode: '',
+        adminId: '',
+        players: [],
+        startTime: 0,
+        oxygenMinutes: 120,
+        status: 'waiting',
+        finalEscapeCode: '',
+        createdAt: Date.now(),
+        customMorseWords: undefined,
+        customGreekWords: undefined,
+        customMaxMorseAttempts: undefined,
+        customMaxMeaningAttempts: undefined,
+        customOxygenMinutes: undefined,
+        phases: undefined,
+        title: undefined,
+        description: undefined,
+        settings: undefined,
+      };
       
       PersistenceManager.saveGameState(
         session,

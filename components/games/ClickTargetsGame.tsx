@@ -16,7 +16,8 @@ interface Target {
   clicked: boolean;
   size: number;
   color: string;
-  shape: 'circle' | 'square';
+  shape: 'circle' | 'square' | 'random';
+  points?: number;
 }
 
 export default function ClickTargetsGame({ config, onComplete, onTimeUpdate }: ClickTargetsGameProps) {

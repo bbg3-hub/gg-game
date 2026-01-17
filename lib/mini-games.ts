@@ -224,7 +224,7 @@ export interface MiniGameResult {
 }
 
 // Default configurations for quick creation
-export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameConfig, 'id' | 'title' | 'description' | 'createdAt' | 'updatedAt'>> = {
+export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, any> = {
   'click-targets': {
     type: 'click-targets',
     difficulty: 5,
@@ -246,6 +246,18 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 80,
     published: false,
+    config: {
+      targetCount: 5,
+      targetSize: 50,
+      moveSpeed: 5,
+      targetColor: '#FF0000',
+      targetShape: 'circle',
+      comboScoring: true,
+      movingTargets: true,
+      spawnRate: 1,
+      wrongClickPenalty: 0,
+      perfectHitBonus: 0,
+    },
   },
   'memory-match': {
     type: 'memory-match',
@@ -268,6 +280,14 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 100,
     published: false,
+    config: {
+      gridSize: '4x4',
+      cards: [],
+      flipTime: 3,
+      showAllTime: 5,
+      perfectMatchBonus: 50,
+      timePenalty: 10,
+    },
   },
   'sequence-puzzle': {
     type: 'sequence-puzzle',
@@ -290,6 +310,16 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 70,
     published: false,
+    config: {
+      sequenceLength: 5,
+      sequenceType: 'colors',
+      sequence: ['red', 'blue', 'green', 'yellow', 'purple'],
+      showTime: 3,
+      inputTime: 10,
+      allowMultipleAttempts: true,
+      hintSystem: true,
+      difficultyVariants: [],
+    },
   },
   'timing-challenge': {
     type: 'timing-challenge',
@@ -313,6 +343,20 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 60,
     published: false,
+    config: {
+      timingWindows: {
+        perfect: 100,
+        good: 200,
+        acceptable: 300,
+      },
+      stimulusType: 'visual',
+      variableDelay: true,
+      minDelay: 1000,
+      maxDelay: 3000,
+      progressiveDifficulty: false,
+      earlyPenalty: 5,
+      latePenalty: 5,
+    },
   },
   'pattern-recognition': {
     type: 'pattern-recognition',
@@ -335,6 +379,14 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 75,
     published: false,
+    config: {
+      patternType: 'geometric',
+      gridSize: '3x3',
+      patterns: [],
+      showTime: 5,
+      recognitionTime: 15,
+      hintSystem: true,
+    },
   },
   'math-mini-game': {
     type: 'math-mini-game',
@@ -357,6 +409,14 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 80,
     published: false,
+    config: {
+      operations: ['addition', 'subtraction', 'multiplication'],
+      numberRange: { min: 1, max: 100 },
+      problemCount: 10,
+      timePerProblem: 30,
+      difficultyScaling: true,
+      customProblems: [],
+    },
   },
   'sorting-game': {
     type: 'sorting-game',
@@ -379,6 +439,14 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 90,
     published: false,
+    config: {
+      items: [],
+      sortingRule: 'numerical',
+      dragAndDrop: true,
+      undoLimit: 3,
+      timeLimit: 90,
+      verificationLogic: 'sequential',
+    },
   },
   'reaction-test': {
     type: 'reaction-test',
@@ -401,6 +469,16 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, Omit<BaseMiniGameCo
     assets: [],
     successThreshold: 70,
     published: false,
+    config: {
+      stimulusType: 'visual',
+      reactionTrials: 5,
+      variableDelays: true,
+      minDelay: 1000,
+      maxDelay: 3000,
+      falseStartPenalty: true,
+      averageCalculation: true,
+      feedback: 'end',
+    },
   },
 };
 
