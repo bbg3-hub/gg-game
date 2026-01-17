@@ -38,12 +38,18 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
             <Link
               href="/join"
               className="border-2 border-cyan-400 px-12 py-4 text-xl font-bold hover:bg-cyan-400 hover:text-black transition-all duration-200 shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.8)]"
             >
               &gt;&gt; JOIN MISSION &lt;&lt;
+            </Link>
+            <Link
+              href="/puzzles"
+              className="border-2 border-purple-400 px-12 py-4 text-xl font-bold hover:bg-purple-400 hover:text-black transition-all duration-200 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.8)]"
+            >
+              🧩 PRACTICE
             </Link>
           </div>
         </div>
