@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { MiniGameConfig, MiniGameType } from '@/lib/mini-games';
+import type { MiniGameConfig, MiniGameType, ClickTargetsConfig } from '@/lib/mini-games';
 import { DEFAULT_MINI_GAME_CONFIGS } from '@/lib/mini-games';
 
 interface MiniGameBuilderProps {
@@ -63,28 +63,49 @@ const DIFFICULTY_LEVELS = Array.from({ length: 10 }, (_, i) => ({
 
 export default function MiniGameBuilder({ adminId, onSave, initialData, mode }: MiniGameBuilderProps) {
   const router = useRouter();
-  const [formData, setFormData] = useState<Partial<MiniGameConfig>>({
-    title: '',
-    description: '',
-    type: 'click-targets',
-    difficulty: 5,
-    timeLimit: 30,
-    maxAttempts: 3,
-    successThreshold: 80,
-    published: false,
-    config: {
-      targetCount: 5,
-      targetSize: 50,
-      moveSpeed: 5,
-      targetColor: '#FF0000',
-      targetShape: 'circle' as const,
-      comboScoring: true,
-      movingTargets: true,
-      spawnRate: 1,
-      wrongClickPenalty: 0,
-      perfectHitBonus: 0,
-    },
-    ...initialData,
+  const [formData, setFormData] = useState<MiniGameConfig>(() => {
+    const defaultClickTargetsConfig: ClickTargetsConfig = {
+      id: '',
+      title: '',
+      description: '',
+      type: 'click-targets',
+      difficulty: 5,
+      timeLimit: 30,
+      maxAttempts: 3,
+      scoringSystem: {
+        basePoints: 10,
+        timeMultiplier: true,
+        difficultyBonus: true,
+      },
+      visualTheme: {
+        primaryColor: '#3B82F6',
+        secondaryColor: '#1E40AF',
+        backgroundColor: '#F8FAFC',
+        textColor: '#1E293B',
+        accentColor: '#F59E0B',
+      },
+      sounds: {},
+      assets: [],
+      successThreshold: 80,
+      failureThreshold: undefined,
+      createdAt: 0,
+      updatedAt: 0,
+      published: false,
+      config: {
+        targetCount: 5,
+        targetSize: 50,
+        moveSpeed: 5,
+        targetColor: '#FF0000',
+        targetShape: 'circle',
+        comboScoring: true,
+        movingTargets: true,
+        spawnRate: 1,
+        wrongClickPenalty: 0,
+        perfectHitBonus: 0,
+      },
+    };
+
+    return { ...defaultClickTargetsConfig, ...initialData } as MiniGameConfig;
   });
 
   const [loading, setLoading] = useState(false);
@@ -101,6 +122,8 @@ export default function MiniGameBuilder({ adminId, onSave, initialData, mode }: 
       scoringSystem: defaultConfig.scoringSystem,
       visualTheme: defaultConfig.visualTheme,
       successThreshold: defaultConfig.successThreshold,
+      // Config will be set based on the specific game type
+      config: (defaultConfig as any).config || {},
     }));
   }, []);
 
