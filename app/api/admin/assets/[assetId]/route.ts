@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { MiniGameAsset } from '@/lib/mini-games';
 
 // In-memory storage
-let assets: MiniGameAsset[] = [];
+const assets: MiniGameAsset[] = [];
 
 // DELETE /api/admin/assets/[assetId] - Delete asset
 export async function DELETE(
