@@ -6,7 +6,7 @@ import {
 } from '@/lib/campaigns';
 
 // In-memory storage (in a real app, this would be a database)
-let campaigns: Campaign[] = [];
+const campaigns: Campaign[] = [];
 
 // GET /api/admin/campaigns - List campaigns
 export async function GET(request: NextRequest) {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { MiniGameAsset } from '@/lib/mini-games';
 
 // In-memory storage (in a real app, this would be a database or file system)
-let assets: MiniGameAsset[] = [];
+const assets: MiniGameAsset[] = [];
 
 // GET /api/admin/assets - List assets
 export async function GET(request: NextRequest) {

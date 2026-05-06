@@ -38,7 +38,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
             <Link
               href="/join"
               className="border-2 border-cyan-400 px-12 py-4 text-xl font-bold hover:bg-cyan-400 hover:text-black transition-all duration-200 shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.8)]"
@@ -50,6 +50,12 @@ export default function LandingPage() {
               className="border-2 border-purple-400 px-12 py-4 text-xl font-bold hover:bg-purple-400 hover:text-black transition-all duration-200 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.8)]"
             >
               🧩 PRACTICE
+            </Link>
+            <Link
+              href="/game/sans"
+              className="border-2 border-white px-12 py-4 text-xl font-bold hover:bg-white hover:text-black transition-all duration-200 shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.8)]"
+            >
+              💀 SANS FIGHT
             </Link>
           </div>
         </div>
