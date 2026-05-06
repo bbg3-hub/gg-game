@@ -225,6 +225,9 @@ export interface MiniGameResult {
 
 // Default configurations for quick creation
 type DefaultMiniGameConfig = {
+  id: string;
+  title: string;
+  description: string;
   type: MiniGameType;
   difficulty: number;
   timeLimit?: number;
@@ -249,12 +252,17 @@ type DefaultMiniGameConfig = {
   assets: MiniGameAsset[];
   successThreshold: number;
   failureThreshold?: number;
+  createdAt: number;
+  updatedAt: number;
   published: boolean;
   config: Record<string, unknown>;
 };
 
 export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConfig> = {
   'click-targets': {
+    id: 'default-click-targets',
+    title: 'Click Targets',
+    description: 'Click on moving or static targets within time limit',
     type: 'click-targets',
     difficulty: 5,
     timeLimit: 30,
@@ -274,6 +282,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 80,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       targetCount: 5,
@@ -289,6 +300,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     },
   },
   'memory-match': {
+    id: 'default-memory-match',
+    title: 'Memory Match',
+    description: 'Match pairs of cards by remembering their positions',
     type: 'memory-match',
     difficulty: 4,
     timeLimit: 120,
@@ -308,6 +322,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 100,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       gridSize: '4x4',
@@ -319,6 +336,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     },
   },
   'sequence-puzzle': {
+    id: 'default-sequence-puzzle',
+    title: 'Sequence Puzzle',
+    description: 'Follow and reproduce a sequence of colors, numbers, or shapes',
     type: 'sequence-puzzle',
     difficulty: 6,
     timeLimit: 60,
@@ -338,6 +358,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 70,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       sequenceLength: 5,
@@ -351,6 +374,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     },
   },
   'timing-challenge': {
+    id: 'default-timing-challenge',
+    title: 'Timing Challenge',
+    description: 'React at the precise right moment within timing windows',
     type: 'timing-challenge',
     difficulty: 7,
     timeLimit: 45,
@@ -371,6 +397,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 60,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       timingWindows: {
@@ -388,6 +417,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     },
   },
   'pattern-recognition': {
+    id: 'default-pattern-recognition',
+    title: 'Pattern Recognition',
+    description: 'Identify patterns in grids or sequences',
     type: 'pattern-recognition',
     difficulty: 8,
     timeLimit: 90,
@@ -407,6 +439,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 75,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       patternType: 'geometric',
@@ -418,6 +453,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     },
   },
   'math-mini-game': {
+    id: 'default-math-mini-game',
+    title: 'Math Mini-Game',
+    description: 'Quick math calculations under time pressure',
     type: 'math-mini-game',
     difficulty: 5,
     timeLimit: 60,
@@ -437,6 +475,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 80,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       operations: ['addition', 'subtraction', 'multiplication'],
@@ -448,6 +489,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     },
   },
   'sorting-game': {
+    id: 'default-sorting-game',
+    title: 'Sorting Game',
+    description: 'Sort items according to specific rules',
     type: 'sorting-game',
     difficulty: 4,
     timeLimit: 90,
@@ -467,6 +511,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 90,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       items: [],
@@ -478,6 +525,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     },
   },
   'reaction-test': {
+    id: 'default-reaction-test',
+    title: 'Reaction Test',
+    description: 'Measure and improve reaction times',
     type: 'reaction-test',
     difficulty: 6,
     timeLimit: 30,
@@ -497,6 +547,9 @@ export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConf
     sounds: {},
     assets: [],
     successThreshold: 70,
+    failureThreshold: undefined,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: false,
     config: {
       stimulusType: 'visual',
