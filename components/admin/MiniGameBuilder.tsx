@@ -113,18 +113,27 @@ export default function MiniGameBuilder({ adminId, onSave, initialData, mode }: 
 
   const handleTypeChange = useCallback((type: MiniGameType) => {
     const defaultConfig = DEFAULT_MINI_GAME_CONFIGS[type];
-    setFormData(prev => ({
-      ...prev,
+    // Create new config from defaults with current title/description preserved
+    const newConfig: MiniGameConfig = {
+      id: formData.id,
+      title: formData.title,
+      description: formData.description,
       type,
       difficulty: defaultConfig.difficulty,
-      timeLimit: defaultConfig.timeLimit,
-      maxAttempts: defaultConfig.maxAttempts,
-      scoringSystem: defaultConfig.scoringSystem,
-      visualTheme: defaultConfig.visualTheme,
+      timeLimit: defaultConfig.timeLimit ?? 30,
+      maxAttempts: defaultConfig.maxAttempts ?? 3,
+      scoringSystem: { ...defaultConfig.scoringSystem },
+      visualTheme: { ...defaultConfig.visualTheme },
+      sounds: { ...defaultConfig.sounds },
+      assets: [...defaultConfig.assets],
       successThreshold: defaultConfig.successThreshold,
-      config: defaultConfig.config,
-    }));
-  }, []);
+      createdAt: formData.createdAt || 0,
+      updatedAt: Date.now(),
+      published: defaultConfig.published,
+      config: { ...defaultConfig.config } as ClickTargetsConfig['config'],
+    } as MiniGameConfig;
+    setFormData(newConfig);
+  }, [formData.id, formData.title, formData.description, formData.createdAt]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
