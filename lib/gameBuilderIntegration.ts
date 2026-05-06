@@ -37,7 +37,7 @@ export interface GameBuilderIntegration {
 
 // Implementation would go here...
 export const GameBuilderIntegration: GameBuilderIntegration = {
-  createGameSystem: async (adminId: string) => {
+  createGameSystem: async () => {
     return {
       miniGames: [],
       campaigns: [],
@@ -46,9 +46,9 @@ export const GameBuilderIntegration: GameBuilderIntegration = {
     };
   },
   
-  loadMiniGames: async (adminId: string) => [],
+  loadMiniGames: async () => [],
   
-  loadCampaigns: async (adminId: string) => [],
+  loadCampaigns: async () => [],
   
   exportSystem: async (system: GameSystem) => JSON.stringify(system),
   

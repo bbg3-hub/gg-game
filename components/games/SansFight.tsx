@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import SansCharacter from './SansCharacter';
 
 type Phase = 'menu' | 'dialogue' | 'attack' | 'result';
 
@@ -16,11 +17,61 @@ interface Bone {
   height: number;
 }
 
+const SPRITE_SHEET = '/sans-spritesheet.png';
+
 const HeartIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
-    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-  </svg>
+  <div 
+    className={`pixelated ${className}`}
+    style={{
+      width: '16px',
+      height: '16px',
+      backgroundImage: `url(${SPRITE_SHEET})`,
+      backgroundPosition: '-220px 0px', // Assuming heart is at this position
+      backgroundSize: '256px 256px',
+      imageRendering: 'pixelated',
+      ...style
+    }}
+  />
 );
+
+const SansButton = ({ 
+  type, 
+  active, 
+  onClick, 
+  onMouseEnter 
+}: { 
+  type: 'FIGHT' | 'ACT' | 'ITEM' | 'MERCY'; 
+  active: boolean; 
+  onClick: () => void;
+  onMouseEnter: () => void;
+}) => {
+  const getPosition = () => {
+    const yOffsets = { FIGHT: 96, ACT: 138, ITEM: 180, MERCY: 222 };
+    const x = active ? -110 : 0;
+    return { x, y: -yOffsets[type] };
+  };
+
+  const pos = getPosition();
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      className="focus:outline-none"
+    >
+      <div 
+        style={{
+          width: '110px',
+          height: '42px',
+          backgroundImage: `url(${SPRITE_SHEET})`,
+          backgroundPosition: `${pos.x}px ${pos.y}px`,
+          backgroundSize: '256px 256px',
+          imageRendering: 'pixelated',
+        }}
+      />
+    </button>
+  );
+};
 
 export default function SansFight({ onBack }: SansFightProps) {
   const [phase, setPhase] = useState<Phase>('dialogue');
@@ -52,7 +103,7 @@ export default function SansFight({ onBack }: SansFightProps) {
     "anyway, let's get to it.",
   ], []);
 
-  const menuOptions = useMemo(() => ['FIGHT', 'ACT', 'ITEM', 'MERCY'], []);
+  const menuOptions: ('FIGHT' | 'ACT' | 'ITEM' | 'MERCY')[] = ['FIGHT', 'ACT', 'ITEM', 'MERCY'];
 
   const typeText = useCallback((fullText: string) => {
     setIsTyping(true);
@@ -78,7 +129,14 @@ export default function SansFight({ onBack }: SansFightProps) {
 
   // Movement handling
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => keysPressed.current.add(e.key);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keysPressed.current.add(e.key);
+      if (phase === 'menu') {
+        if (e.key === 'ArrowLeft') setSelectedMenu(m => (m > 0 ? m - 1 : 3));
+        if (e.key === 'ArrowRight') setSelectedMenu(m => (m < 3 ? m + 1 : 0));
+        if (e.key === 'Enter' || e.key === 'z') handleMenuSelect(selectedMenu);
+      }
+    };
     const handleKeyUp = (e: KeyboardEvent) => keysPressed.current.delete(e.key);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -86,7 +144,7 @@ export default function SansFight({ onBack }: SansFightProps) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [phase, selectedMenu]);
 
   // Game Loop
   useEffect(() => {
@@ -199,64 +257,51 @@ export default function SansFight({ onBack }: SansFightProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-mono p-4 select-none overflow-hidden">
-      {/* Sans Sprite Area */}
-      <div className="relative w-64 h-64 mb-8 flex items-center justify-center">
-        <svg viewBox="0 0 100 100" className={`w-full h-full transition-all duration-300 ${phase === 'attack' ? 'scale-110' : 'animate-bounce [animation-duration:3s]'}`}>
-          {/* Sans Head */}
-          <g>
-            <path
-              d="M30 40 Q30 20 50 20 Q70 20 70 40 Q70 55 50 55 Q30 55 30 40"
-              fill="white"
-              stroke="white"
-              strokeWidth="2"
-            />
-            {/* Eyes */}
-            <rect x="38" y="35" width="6" height="8" fill="black" />
-            <rect x="56" y="35" width="6" height="8" fill="black" />
-            {/* Glowing Eye during attack */}
-            {phase === 'attack' && (
-              <circle cx="41" cy="39" r="3" fill="#00ffff" className="animate-pulse shadow-[0_0_10px_#00ffff]" />
-            )}
-            {/* Mouth */}
-            <path d="M38 46 Q50 52 62 46" stroke="black" strokeWidth="1" fill="none" />
-            <path d="M40 46 L40 50 M44 47 L44 51 M48 48 L48 52 M52 48 L52 52 M56 47 L56 51 M60 46 L60 50" stroke="black" strokeWidth="0.5" />
-          </g>
-          
-          {/* Sans Body */}
-          <path
-            d="M35 55 L25 80 L75 80 L65 55 Z"
-            fill="white"
-            stroke="white"
-            strokeWidth="2"
-          />
-          {/* Jacket details */}
-          <path d="M42 55 L38 80 M58 55 L62 80" stroke="black" strokeWidth="2" />
-          {/* Shorts */}
-          <rect x="30" y="80" width="40" height="10" fill="white" />
-          <rect x="45" y="80" width="10" height="10" fill="black" />
-        </svg>
+      <style jsx>{`
+        .pixelated {
+          image-rendering: pixelated;
+        }
+        .determination-font {
+          font-family: 'Determination Mono', 'Courier New', Courier, monospace;
+        }
+        .hp-bar-bg {
+          background-color: #f00;
+          width: 48px;
+          height: 21px;
+        }
+        .hp-bar-fill {
+          background-color: #ff0;
+          height: 100%;
+        }
+      `}</style>
+
+      {/* Sans Character */}
+      <div className="mb-12">
+        <SansCharacter 
+          expression={dialogueIndex === 3 ? 'serious' : 'normal'} 
+        />
       </div>
 
       {/* Main Battle Box */}
       <div 
-        className={`w-full max-w-2xl border-4 border-white aspect-[2/1] relative p-6 mb-8 flex items-start justify-start overflow-hidden bg-black ${dialogueIndex === 3 ? 'animate-pulse text-red-500 border-red-500' : ''}`}
+        className={`w-full max-w-2xl border-4 border-white aspect-[2.5/1] relative p-6 mb-4 flex items-start justify-start overflow-hidden bg-black ${dialogueIndex === 3 ? 'text-red-500 border-red-500' : ''}`}
         onClick={phase === 'dialogue' ? handleNextDialogue : undefined}
       >
         {phase === 'dialogue' && (
-          <div className="text-2xl leading-relaxed cursor-pointer w-full h-full">
+          <div className="text-3xl leading-relaxed cursor-pointer w-full h-full determination-font">
             * {text}
             {!isTyping && (
-              <span className="inline-block w-3 h-3 bg-white ml-2 animate-pulse" />
+              <span className="inline-block w-4 h-4 bg-white ml-2 animate-pulse" />
             )}
           </div>
         )}
 
         {phase === 'menu' && (
-          <div className="grid grid-cols-2 gap-4 w-full text-2xl">
-            <div className="col-span-2 flex items-center">
-               <HeartIcon className="text-red-500 w-6 h-6 mr-4" />
-               <span>What will you do?</span>
-            </div>
+          <div className="text-3xl determination-font w-full h-full flex flex-col pt-2">
+             <div className="flex items-center">
+                <HeartIcon className="mr-6" />
+                <span>* What will you do?</span>
+             </div>
           </div>
         )}
 
@@ -264,11 +309,11 @@ export default function SansFight({ onBack }: SansFightProps) {
           <div className="w-full h-full relative">
             {/* Player Heart */}
             <HeartIcon 
-              className="text-red-500 w-6 h-6 absolute" 
+              className="absolute" 
               style={{ 
                 left: `${vHeartPos.x}%`, 
                 top: `${vHeartPos.y}%`,
-                transform: 'translate(-50%, -50%)'
+                transform: 'translate(-50%, -50%) scale(1.5)'
               }} 
             />
 
@@ -276,12 +321,13 @@ export default function SansFight({ onBack }: SansFightProps) {
             {vBones.map(bone => (
               <div 
                 key={bone.id}
-                className="absolute bg-white border border-gray-400 rounded-sm"
+                className="absolute bg-white"
                 style={{
                   left: `${bone.x}%`,
                   top: `${bone.y}%`,
                   width: `${bone.width}%`,
-                  height: `${bone.height}%`
+                  height: `${bone.height}%`,
+                  border: '1px solid black'
                 }}
               />
             ))}
@@ -289,7 +335,7 @@ export default function SansFight({ onBack }: SansFightProps) {
         )}
 
         {phase === 'result' && (
-          <div className="w-full h-full flex flex-col items-center justify-center text-red-500 text-4xl font-bold animate-pulse">
+          <div className="w-full h-full flex flex-col items-center justify-center text-red-500 text-5xl font-bold determination-font">
             GAME OVER
             <button 
               onClick={() => {
@@ -297,7 +343,7 @@ export default function SansFight({ onBack }: SansFightProps) {
                 setPhase('dialogue');
                 setDialogueIndex(0);
               }}
-              className="mt-8 text-xl text-white border-2 border-white px-6 py-2 hover:bg-white hover:text-black transition-all"
+              className="mt-8 text-2xl text-white border-4 border-white px-8 py-3 hover:bg-white hover:text-black transition-all"
             >
               RETRY
             </button>
@@ -305,49 +351,39 @@ export default function SansFight({ onBack }: SansFightProps) {
         )}
       </div>
 
-      {/* Player Stats */}
-      <div className="w-full max-w-2xl flex items-center justify-start gap-8 mb-8 text-xl font-bold">
-        <span>CHARA</span>
-        <span>LV 19</span>
+      {/* Player Stats Bar */}
+      <div className="w-full max-w-2xl flex items-center justify-start gap-4 mb-4 text-2xl determination-font font-bold">
+        <span className="mr-4">UT</span>
+        <span className="mr-8">LV 19</span>
         <div className="flex items-center gap-2">
-          <span>HP</span>
-          <div className="w-48 h-6 bg-red-600 relative">
+          <span className="text-sm font-bold mr-1">HP</span>
+          <div className="hp-bar-bg">
             <div 
-              className={`h-full bg-yellow-400 transition-all duration-100 ${playerHP < 20 ? 'animate-pulse' : ''}`} 
+              className="hp-bar-fill transition-all duration-100" 
               style={{ width: `${(playerHP / maxHP) * 100}%` }}
             />
           </div>
-          <span>{playerHP} / {maxHP}</span>
+          <span className="ml-2">{playerHP} / {maxHP}</span>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className={`w-full max-w-2xl grid grid-cols-4 gap-4 transition-opacity duration-300 ${phase === 'attack' || phase === 'result' ? 'opacity-30 pointer-events-none' : ''}`}>
+      <div className={`w-full max-w-2xl grid grid-cols-4 gap-2 transition-opacity duration-300 ${phase === 'attack' || phase === 'result' ? 'opacity-30 pointer-events-none' : ''}`}>
         {menuOptions.map((option, i) => (
-          <button
+          <SansButton
             key={option}
+            type={option}
+            active={selectedMenu === i && phase === 'menu'}
             onClick={() => handleMenuSelect(i)}
             onMouseEnter={() => setSelectedMenu(i)}
-            className={`
-              border-2 py-2 text-xl font-bold transition-all
-              ${selectedMenu === i 
-                ? 'border-yellow-400 text-yellow-400 bg-black scale-105' 
-                : 'border-orange-500 text-orange-500 bg-black hover:border-orange-300'
-              }
-            `}
-          >
-            <div className="flex items-center justify-center gap-2">
-              {selectedMenu === i && <HeartIcon className="w-4 h-4 text-red-500" />}
-              {option}
-            </div>
-          </button>
+          />
         ))}
       </div>
 
       {onBack && (
         <button 
           onClick={onBack}
-          className="mt-12 text-gray-500 hover:text-white transition-colors"
+          className="mt-8 text-gray-500 hover:text-white transition-colors text-sm"
         >
           [ ESCAPE TO MENU ]
         </button>

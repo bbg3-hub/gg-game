@@ -1,5 +1,5 @@
-import type { MiniGameConfig } from './mini-games';
-import type { EducationalPuzzle } from './educationalPuzzles';
+// import type { MiniGameConfig } from './mini-games';
+// import type { EducationalPuzzle } from './educationalPuzzles';
 
 export interface GameFlowStep {
   id: string;

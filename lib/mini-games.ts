@@ -219,12 +219,12 @@ export interface MiniGameResult {
   timeSpent: number;
   attempts: number;
   success: boolean;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   timestamp: number;
 }
 
 // Default configurations for quick creation
-export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, any> = {
+export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, unknown> = {
   'click-targets': {
     type: 'click-targets',
     difficulty: 5,
