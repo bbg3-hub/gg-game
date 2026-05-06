@@ -1,36 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import type { MiniGameConfig, MiniGameType } from '@/lib/mini-games';
+import React, { useState } from 'react';
+import type { MiniGameConfig } from '@/lib/mini-games';
 import ClickTargetsGame from './ClickTargetsGame';
 import MemoryMatchGame from './MemoryMatchGame';
 import MathMiniGame from './MathMiniGame';
 
 interface GameEngineProps {
   miniGame: MiniGameConfig;
-  onGameComplete: (score: number, details: Record<string, any>) => void;
+  onGameComplete: (score: number, details: Record<string, unknown>) => void;
   onGameProgress?: (progress: number) => void;
   className?: string;
 }
 
 export default function GameEngine({ miniGame, onGameComplete, onGameProgress, className }: GameEngineProps) {
-  const [gameState, setGameState] = useState<'loading' | 'playing' | 'completed' | 'error'>('loading');
-  const [currentScore, setCurrentScore] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(miniGame.timeLimit || 30);
+  const [gameState, setGameState] = useState<'playing' | 'completed' | 'error'>('playing');
 
-  useEffect(() => {
-    // Initialize game
-    setGameState('playing');
-  }, [miniGame.id]);
-
-  const handleGameComplete = (score: number, details: Record<string, any>) => {
-    setCurrentScore(score);
+  const handleGameComplete = (score: number, details: Record<string, unknown>) => {
     setGameState('completed');
     onGameComplete(score, details);
   };
 
   const handleTimeUpdate = (time: number) => {
-    setTimeRemaining(time);
     if (onGameProgress && miniGame.timeLimit) {
       const progress = ((miniGame.timeLimit - time) / miniGame.timeLimit) * 100;
       onGameProgress(progress);

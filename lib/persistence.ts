@@ -351,7 +351,7 @@ export class PersistenceManager {
   }
   
   // Calculate checksum for integrity
-  private static calculateChecksum(data: any[]): string {
+  private static calculateChecksum(data: unknown[]): string {
     const jsonString = JSON.stringify(data);
     // Simple hash - in real app would use proper cryptographic hash
     let hash = 0;
@@ -370,7 +370,7 @@ export class PersistenceManager {
   }
   
   // Merge sessions from backup
-  private static mergeSessions(backupSessions: GameSession[]): void {
+  private static mergeSessions(_backupSessions: GameSession[]): void {
     // This would merge sessions with existing session store
     // Implementation depends on actual session storage mechanism
   }

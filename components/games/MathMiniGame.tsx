@@ -5,7 +5,7 @@ import type { MathMiniGameConfig } from '@/lib/mini-games';
 
 interface MathGameProps {
   config: MathMiniGameConfig;
-  onComplete: (score: number, details: Record<string, any>) => void;
+  onComplete: (score: number, details: Record<string, unknown>) => void;
   onTimeUpdate?: (timeRemaining: number) => void;
 }
 
@@ -30,6 +30,8 @@ export default function MathMiniGame({ config, onComplete, onTimeUpdate }: MathG
 
   const gameConfig = config.config;
   const { visualTheme } = config;
+
+  const [totalTimeTaken, setTotalTimeTaken] = useState(0);
 
   // Generate math problems
   const generateProblems = useCallback((): MathProblem[] => {
@@ -176,11 +178,12 @@ export default function MathMiniGame({ config, onComplete, onTimeUpdate }: MathG
   };
 
   // Finish game
-  const finishGame = () => {
+  const finishGame = useCallback(() => {
     setGameState('finished');
     
     const endTime = Date.now();
     const totalTime = (endTime - startTime) / 1000;
+    setTotalTimeTaken(totalTime);
     const accuracy = totalAttempts > 0 ? (correctAnswers / totalAttempts) * 100 : 0;
     
     onComplete(score, {
@@ -191,7 +194,7 @@ export default function MathMiniGame({ config, onComplete, onTimeUpdate }: MathG
       totalTime,
       avgTimePerProblem: problems.length > 0 ? totalTime / problems.length : 0,
     });
-  };
+  }, [startTime, totalAttempts, correctAnswers, onComplete, score, problems.length]);
 
   // Game timer
   useEffect(() => {
@@ -209,7 +212,7 @@ export default function MathMiniGame({ config, onComplete, onTimeUpdate }: MathG
 
       return () => clearTimeout(timer);
     }
-  }, [gameState, timeRemaining, onTimeUpdate]);
+  }, [gameState, timeRemaining, onTimeUpdate, finishGame]);
 
   const currentProblem = problems[currentProblemIndex];
 
@@ -369,7 +372,7 @@ export default function MathMiniGame({ config, onComplete, onTimeUpdate }: MathG
               <div>Final Score: {score}</div>
               <div>Correct Answers: {correctAnswers}/{problems.length}</div>
               <div>Accuracy: {totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0}%</div>
-              <div>Total Time: {Math.round(((Date.now() - startTime) / 1000))}s</div>
+              <div>Total Time: {Math.round(totalTimeTaken)}s</div>
             </div>
           </div>
         </div>

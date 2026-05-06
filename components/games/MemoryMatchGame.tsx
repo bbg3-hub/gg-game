@@ -5,7 +5,7 @@ import type { MemoryMatchConfig } from '@/lib/mini-games';
 
 interface MemoryMatchGameProps {
   config: MemoryMatchConfig;
-  onComplete: (score: number, details: Record<string, any>) => void;
+  onComplete: (score: number, details: Record<string, unknown>) => void;
   onTimeUpdate?: (timeRemaining: number) => void;
 }
 
@@ -128,7 +128,31 @@ export default function MemoryMatchGame({ config, onComplete, onTimeUpdate }: Me
             )
           );
           
-          setMatches(prev => prev + 1);
+          setMatches(prev => {
+            const newMatches = prev + 1;
+            const totalPairs = cards.length / 2;
+            if (newMatches === totalPairs && totalPairs > 0) {
+              setGameState('finished');
+              
+              // Calculate bonus points
+              let bonusScore = 0;
+              if (config.scoringSystem.bonusConditions?.includes('perfect-match') && moves + 1 === totalPairs) {
+                bonusScore = gameConfig.perfectMatchBonus || 50;
+              }
+              
+              const finalScore = score + config.scoringSystem.basePoints * 2 + bonusScore;
+              onComplete(finalScore, {
+                totalPairs,
+                matches: newMatches,
+                moves: moves + 1,
+                perfect: moves + 1 === totalPairs,
+                timeRemaining,
+                accuracy: 100,
+                bonusScore,
+              });
+            }
+            return newMatches;
+          });
           setScore(prev => prev + config.scoringSystem.basePoints * 2);
         } else {
           // No match - flip cards back
@@ -150,31 +174,6 @@ export default function MemoryMatchGame({ config, onComplete, onTimeUpdate }: Me
       }, 1000);
     }
   };
-
-  // Check for game completion
-  useEffect(() => {
-    const totalPairs = cards.length / 2;
-    if (matches === totalPairs && totalPairs > 0) {
-      setGameState('finished');
-      
-      // Calculate bonus points
-      let bonusScore = 0;
-      if (config.scoringSystem.bonusConditions?.includes('perfect-match') && moves === totalPairs) {
-        bonusScore = gameConfig.perfectMatchBonus || 50;
-      }
-      
-      const finalScore = score + bonusScore;
-      onComplete(finalScore, {
-        totalPairs,
-        matches: matches,
-        moves,
-        perfect: moves === totalPairs,
-        timeRemaining,
-        accuracy: (matches / totalPairs) * 100,
-        bonusScore,
-      });
-    }
-  }, [matches, cards.length, score, moves, gameConfig.perfectMatchBonus, config.scoringSystem.bonusConditions, timeRemaining, onComplete]);
 
   // Game timer
   useEffect(() => {
@@ -200,7 +199,7 @@ export default function MemoryMatchGame({ config, onComplete, onTimeUpdate }: Me
 
       return () => clearTimeout(timer);
     }
-  }, [gameState, timeRemaining, onTimeUpdate, score, matches, moves, cards.length, onComplete]);
+  }, [gameState, timeRemaining, onTimeUpdate, score, matches, moves, cards.length, onComplete, showAllTime]);
 
   // Countdown for show all time
   useEffect(() => {
