@@ -224,7 +224,36 @@ export interface MiniGameResult {
 }
 
 // Default configurations for quick creation
-export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, unknown> = {
+type DefaultMiniGameConfig = {
+  type: MiniGameType;
+  difficulty: number;
+  timeLimit?: number;
+  maxAttempts?: number;
+  scoringSystem: {
+    basePoints: number;
+    timeMultiplier?: boolean;
+    difficultyBonus?: boolean;
+    bonusConditions?: string[];
+    penaltyConditions?: string[];
+  };
+  visualTheme: {
+    primaryColor: string;
+    secondaryColor: string;
+    backgroundColor: string;
+    textColor: string;
+    accentColor: string;
+    fontFamily?: string;
+    customCSS?: string;
+  };
+  sounds: Record<string, string | undefined>;
+  assets: MiniGameAsset[];
+  successThreshold: number;
+  failureThreshold?: number;
+  published: boolean;
+  config: Record<string, unknown>;
+};
+
+export const DEFAULT_MINI_GAME_CONFIGS: Record<MiniGameType, DefaultMiniGameConfig> = {
   'click-targets': {
     type: 'click-targets',
     difficulty: 5,

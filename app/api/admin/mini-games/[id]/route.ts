@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { type MiniGameConfig } from '@/lib/mini-games';
 
 // In-memory storage (in a real app, this would be a database)
-let miniGames: MiniGameConfig[] = [];
+const miniGames: MiniGameConfig[] = [];
 
 // GET /api/admin/mini-games/[id] - Get mini-game details
 export async function GET(

@@ -82,17 +82,6 @@ export default function GameEngine({ miniGame, onGameComplete, onGameProgress, c
     }
   };
 
-  if (gameState === 'loading') {
-    return (
-      <div className={`p-6 ${className || ''}`}>
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <div className="text-yellow-400">Loading {miniGame.title}...</div>
-        </div>
-      </div>
-    );
-  }
-
   if (gameState === 'error') {
     return (
       <div className={`p-6 ${className || ''}`}>

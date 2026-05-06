@@ -6,7 +6,7 @@ import {
 } from '@/lib/mini-games';
 
 // In-memory storage (in a real app, this would be a database)
-let miniGames: MiniGameConfig[] = [];
+const miniGames: MiniGameConfig[] = [];
 
 // GET /api/admin/mini-games - List mini-games
 export async function GET(request: NextRequest) {
