@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import SansCharacter from './SansCharacter';
 
-type Phase = 'menu' | 'dialogue' | 'attack' | 'result';
+const VIRTUAL_WIDTH = 640;
+const VIRTUAL_HEIGHT = 480;
+const SPRITE_SHEET = '/sans-spritesheet.png';
 
-interface SansFightProps {
-  onBack?: () => void;
-}
+type Phase = 'menu' | 'dialogue' | 'attack' | 'result';
 
 interface Bone {
   id: number;
@@ -17,18 +17,20 @@ interface Bone {
   height: number;
 }
 
-const SPRITE_SHEET = '/sans-spritesheet.png';
-
-const HeartIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
+const HeartIcon = ({ x, y, size = 16, className, style }: { x?: number; y?: number; size?: number; className?: string; style?: React.CSSProperties }) => (
   <div 
     className={`pixelated ${className}`}
     style={{
-      width: '16px',
-      height: '16px',
+      position: 'absolute',
+      left: x !== undefined ? `${x}px` : undefined,
+      top: y !== undefined ? `${y}px` : undefined,
+      width: `${size}px`,
+      height: `${size}px`,
       backgroundImage: `url(${SPRITE_SHEET})`,
-      backgroundPosition: '-220px 0px', // Assuming heart is at this position
+      backgroundPosition: '-220px 0px',
       backgroundSize: '256px 256px',
       imageRendering: 'pixelated',
+      zIndex: 50,
       ...style
     }}
   />
@@ -37,63 +39,66 @@ const HeartIcon = ({ className, style }: { className?: string; style?: React.CSS
 const SansButton = ({ 
   type, 
   active, 
-  onClick, 
-  onMouseEnter 
+  x, 
+  y 
 }: { 
   type: 'FIGHT' | 'ACT' | 'ITEM' | 'MERCY'; 
-  active: boolean; 
-  onClick: () => void;
-  onMouseEnter: () => void;
+  active: boolean;
+  x: number;
+  y: number;
 }) => {
-  const getPosition = () => {
-    const yOffsets = { FIGHT: 96, ACT: 138, ITEM: 180, MERCY: 222 };
-    const x = active ? -110 : 0;
-    return { x, y: -yOffsets[type] };
+  const getSpriteY = () => {
+    switch (type) {
+      case 'FIGHT': return 96;
+      case 'ACT': return 138;
+      case 'ITEM': return 180;
+      case 'MERCY': return 222;
+    }
   };
 
-  const pos = getPosition();
+  const spriteX = active ? -110 : 0;
+  const spriteY = -getSpriteY();
 
   return (
-    <button
-      onClick={onClick}
-      onMouseEnter={onMouseEnter}
-      className="focus:outline-none"
+    <div 
+      style={{
+        position: 'absolute',
+        left: `${x}px`,
+        top: `${y}px`,
+        width: '110px',
+        height: '42px',
+        backgroundImage: `url(${SPRITE_SHEET})`,
+        backgroundPosition: `${spriteX}px ${spriteY}px`,
+        backgroundSize: '256px 256px',
+        imageRendering: 'pixelated',
+      }}
     >
-      <div 
-        style={{
-          width: '110px',
-          height: '42px',
-          backgroundImage: `url(${SPRITE_SHEET})`,
-          backgroundPosition: `${pos.x}px ${pos.y}px`,
-          backgroundSize: '256px 256px',
-          imageRendering: 'pixelated',
-        }}
-      />
-    </button>
+      {active && <HeartIcon x={8} y={13} />}
+    </div>
   );
 };
 
-export default function SansFight({ onBack }: SansFightProps) {
+export default function SansFight({ onBack }: { onBack?: () => void }) {
   const [phase, setPhase] = useState<Phase>('dialogue');
   const [dialogueIndex, setDialogueIndex] = useState(0);
   const [text, setText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState(0);
   const [playerHP, setPlayerHP] = useState(92);
+  const [scale, setScale] = useState(1);
+  
   const maxHP = 92;
 
-  // Attack phase states (visual)
-  const [vHeartPos, setVHeartPos] = useState({ x: 50, y: 50 });
+  // Attack phase states
+  const [vHeartPos, setVHeartPos] = useState({ x: 320, y: 320 });
   const [vBones, setVBones] = useState<Bone[]>([]);
   
-  // Game state refs (for the loop)
-  const heartPos = useRef({ x: 50, y: 50 });
+  const heartPos = useRef({ x: 320, y: 320 });
   const bones = useRef<Bone[]>([]);
   const lastBoneTime = useRef(0);
   const nextBoneId = useRef(0);
   const attackStartTime = useRef(0);
   const keysPressed = useRef<Set<string>>(new Set());
-  const lastCollisionTime = useRef(0);
 
   const dialogues = useMemo(() => [
     "it's a beautiful day outside.",
@@ -104,13 +109,28 @@ export default function SansFight({ onBack }: SansFightProps) {
   ], []);
 
   const menuOptions: ('FIGHT' | 'ACT' | 'ITEM' | 'MERCY')[] = ['FIGHT', 'ACT', 'ITEM', 'MERCY'];
+  const menuXPositions = [32, 185, 345, 500];
+
+  // Scaling logic
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        const sw = window.innerWidth / VIRTUAL_WIDTH;
+        const sh = window.innerHeight / VIRTUAL_HEIGHT;
+        setScale(Math.min(sw, sh));
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const typeText = useCallback((fullText: string) => {
     setIsTyping(true);
     setText('');
     let i = 0;
     const interval = setInterval(() => {
-      setText((prev) => prev + fullText[i]);
+      setText(fullText.substring(0, i + 1));
       i++;
       if (i >= fullText.length) {
         clearInterval(interval);
@@ -127,31 +147,55 @@ export default function SansFight({ onBack }: SansFightProps) {
     }
   }, [phase, dialogueIndex, typeText, dialogues]);
 
-  // Movement handling
+  const handleNextDialogue = useCallback(() => {
+    if (isTyping) {
+      setText(dialogues[dialogueIndex]);
+      setIsTyping(false);
+      return;
+    }
+    if (dialogueIndex < dialogues.length - 1) {
+      setDialogueIndex(dialogueIndex + 1);
+    } else {
+      setPhase('menu');
+    }
+  }, [isTyping, dialogues, dialogueIndex]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysPressed.current.add(e.key);
+      const key = e.key.toLowerCase();
+      keysPressed.current.add(key);
+      
       if (phase === 'menu') {
-        if (e.key === 'ArrowLeft') setSelectedMenu(m => (m > 0 ? m - 1 : 3));
-        if (e.key === 'ArrowRight') setSelectedMenu(m => (m < 3 ? m + 1 : 0));
-        if (e.key === 'Enter' || e.key === 'z') handleMenuSelect(selectedMenu);
+        if (key === 'arrowleft') setSelectedMenu(m => (m > 0 ? m - 1 : 3));
+        if (key === 'arrowright') setSelectedMenu(m => (m < 3 ? m + 1 : 0));
+        if (key === 'enter' || key === 'z') setPhase('attack');
+      } else if (phase === 'dialogue') {
+        if (key === 'enter' || key === 'z') {
+          handleNextDialogue();
+        }
+      } else if (phase === 'result') {
+        if (key === 'enter' || key === 'z') {
+          setPlayerHP(92);
+          setPhase('dialogue');
+          setDialogueIndex(0);
+        }
       }
     };
-    const handleKeyUp = (e: KeyboardEvent) => keysPressed.current.delete(e.key);
+    const handleKeyUp = (e: KeyboardEvent) => keysPressed.current.delete(e.key.toLowerCase());
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [phase, selectedMenu]);
+  }, [phase, selectedMenu, handleNextDialogue]);
 
-  // Game Loop
+  // Game Loop for Attack Phase
   useEffect(() => {
     if (phase !== 'attack') return;
 
     attackStartTime.current = Date.now();
-    heartPos.current = { x: 50, y: 50 };
+    heartPos.current = { x: 320, y: 320 };
     bones.current = [];
     let frameId: number;
 
@@ -159,70 +203,66 @@ export default function SansFight({ onBack }: SansFightProps) {
       const now = Date.now();
       const elapsed = now - attackStartTime.current;
 
-      // End attack after 8 seconds
-      if (elapsed > 8000) {
-        setPhase('dialogue');
-        setDialogueIndex(4);
+      if (elapsed > 10000) {
+        setPhase('menu');
         return;
       }
 
-      // Move heart
-      const speed = 0.8;
-      if (keysPressed.current.has('ArrowUp') || keysPressed.current.has('w')) heartPos.current.y -= speed;
-      if (keysPressed.current.has('ArrowDown') || keysPressed.current.has('s')) heartPos.current.y += speed;
-      if (keysPressed.current.has('ArrowLeft') || keysPressed.current.has('a')) heartPos.current.x -= speed;
-      if (keysPressed.current.has('ArrowRight') || keysPressed.current.has('d')) heartPos.current.x += speed;
+      // Movement
+      const speed = 4;
+      if (keysPressed.current.has('arrowup') || keysPressed.current.has('w')) heartPos.current.y -= speed;
+      if (keysPressed.current.has('arrowdown') || keysPressed.current.has('s')) heartPos.current.y += speed;
+      if (keysPressed.current.has('arrowleft') || keysPressed.current.has('a')) heartPos.current.x -= speed;
+      if (keysPressed.current.has('arrowright') || keysPressed.current.has('d')) heartPos.current.x += speed;
 
-      // Bounds
-      heartPos.current.x = Math.max(2, Math.min(98, heartPos.current.x));
-      heartPos.current.y = Math.max(5, Math.min(95, heartPos.current.y));
+      // Box constraints: x: 32, y: 250, w: 575, h: 140
+      // Inner box (account for border and padding)
+      const boxLeft = 32 + 5;
+      const boxTop = 250 + 5;
+      const boxRight = 32 + 575 - 5 - 16;
+      const boxBottom = 250 + 140 - 5 - 16;
+      
+      heartPos.current.x = Math.max(boxLeft, Math.min(boxRight, heartPos.current.x));
+      heartPos.current.y = Math.max(boxTop, Math.min(boxBottom, heartPos.current.y));
 
-      // Spawn bones
-      if (now - lastBoneTime.current > 800) {
-        const height = 25 + Math.random() * 35;
+      // Bone spawning
+      if (now - lastBoneTime.current > 400) {
+        const height = 40 + Math.random() * 60;
         const isTop = Math.random() > 0.5;
-        const newBone: Bone = {
+        bones.current.push({
           id: nextBoneId.current++,
-          x: 100,
-          y: isTop ? 0 : 100 - height,
-          width: 6,
+          x: 640,
+          y: isTop ? 250 + 5 : 250 + 140 - height - 5,
+          width: 10,
           height: height
-        };
-        bones.current.push(newBone);
+        });
         lastBoneTime.current = now;
       }
 
-      // Move bones
       bones.current = bones.current
-        .map(b => ({ ...b, x: b.x - 1.2 }))
-        .filter(b => b.x > -10);
+        .map(b => ({ ...b, x: b.x - 6 }))
+        .filter(b => b.x + b.width > 0);
 
-      // Collision detection (if not recently hit)
-      if (now - lastCollisionTime.current > 200) {
-        let hit = false;
-        for (const b of bones.current) {
-          const hSizeX = 4;
-          const hSizeY = 8;
-          if (
-            heartPos.current.x + hSizeX/2 > b.x &&
-            heartPos.current.x - hSizeX/2 < b.x + b.width &&
-            heartPos.current.y + hSizeY/2 > b.y &&
-            heartPos.current.y - hSizeY/2 < b.y + b.height
-          ) {
-            hit = true;
-            break;
-          }
-        }
-        if (hit) {
-          setPlayerHP(hp => Math.max(0, hp - 5));
-          lastCollisionTime.current = now;
+      // Collision
+      let hit = false;
+      for (const b of bones.current) {
+        if (
+          heartPos.current.x < b.x + b.width &&
+          heartPos.current.x + 16 > b.x &&
+          heartPos.current.y < b.y + b.height &&
+          heartPos.current.y + 16 > b.y
+        ) {
+          hit = true;
+          break;
         }
       }
+      
+      if (hit) {
+        setPlayerHP(hp => Math.max(0, hp - 2));
+      }
 
-      // Sync state for rendering
       setVHeartPos({ ...heartPos.current });
       setVBones([...bones.current]);
-
       frameId = requestAnimationFrame(update);
     };
 
@@ -231,163 +271,150 @@ export default function SansFight({ onBack }: SansFightProps) {
   }, [phase]);
 
   useEffect(() => {
-    if (playerHP <= 0 && phase !== 'result') {
-      setPhase('result');
-    }
+    if (playerHP <= 0 && phase !== 'result') setPhase('result');
   }, [playerHP, phase]);
 
-  const handleNextDialogue = () => {
-    if (isTyping) {
-      setText(dialogues[dialogueIndex]);
-      setIsTyping(false);
-      return;
-    }
-
-    if (dialogueIndex < dialogues.length - 1) {
-      setDialogueIndex(dialogueIndex + 1);
-    } else {
-      setPhase('menu');
-    }
-  };
-
-  const handleMenuSelect = (index: number) => {
-    setSelectedMenu(index);
-    setPhase('attack');
-  };
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-mono p-4 select-none overflow-hidden">
+    <div className="flex items-center justify-center min-h-screen bg-black overflow-hidden font-mono">
       <style jsx>{`
         .pixelated {
           image-rendering: pixelated;
         }
         .determination-font {
-          font-family: 'Determination Mono', 'Courier New', Courier, monospace;
+          font-family: 'Determination Mono', monospace;
         }
-        .hp-bar-bg {
-          background-color: #f00;
-          width: 48px;
-          height: 21px;
+        @keyframes heartPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
-        .hp-bar-fill {
-          background-color: #ff0;
-          height: 100%;
+        .animate-heart-pulse {
+          animation: heartPulse 0.8s infinite;
         }
       `}</style>
 
-      {/* Sans Character */}
-      <div className="mb-12">
-        <SansCharacter 
-          expression={dialogueIndex === 3 ? 'serious' : 'normal'} 
-        />
-      </div>
-
-      {/* Main Battle Box */}
       <div 
-        className={`w-full max-w-2xl border-4 border-white aspect-[2.5/1] relative p-6 mb-4 flex items-start justify-start overflow-hidden bg-black ${dialogueIndex === 3 ? 'text-red-500 border-red-500' : ''}`}
-        onClick={phase === 'dialogue' ? handleNextDialogue : undefined}
+        style={{
+          width: `${VIRTUAL_WIDTH}px`,
+          height: `${VIRTUAL_HEIGHT}px`,
+          position: 'relative',
+          transform: `scale(${scale})`,
+          backgroundColor: 'black',
+        }}
       >
-        {phase === 'dialogue' && (
-          <div className="text-3xl leading-relaxed cursor-pointer w-full h-full determination-font">
-            * {text}
-            {!isTyping && (
-              <span className="inline-block w-4 h-4 bg-white ml-2 animate-pulse" />
-            )}
-          </div>
-        )}
+        {/* Sans Character */}
+        <div style={{ position: 'absolute', left: '320px', top: '130px', transform: 'translateX(-50%) scale(2)' }}>
+          <SansCharacter expression={dialogueIndex === 3 ? 'serious' : (phase === 'attack' ? 'wink' : 'normal')} />
+        </div>
 
-        {phase === 'menu' && (
-          <div className="text-3xl determination-font w-full h-full flex flex-col pt-2">
-             <div className="flex items-center">
-                <HeartIcon className="mr-6" />
-                <span>* What will you do?</span>
-             </div>
-          </div>
-        )}
+        {/* Battle Box */}
+        <div 
+          style={{
+            position: 'absolute',
+            left: '32px',
+            top: '250px',
+            width: '575px',
+            height: '140px',
+            border: '5px solid white',
+            backgroundColor: 'black',
+            boxSizing: 'border-box',
+          }}
+        >
+          {phase === 'dialogue' && (
+            <div className="determination-font text-white text-[32px] p-[20px] leading-[1.2] whitespace-pre-wrap select-none">
+              * {text}
+              {!isTyping && (
+                <span className="inline-block w-[16px] h-[16px] bg-white ml-2 animate-heart-pulse" />
+              )}
+            </div>
+          )}
 
-        {phase === 'attack' && (
-          <div className="w-full h-full relative">
-            {/* Player Heart */}
-            <HeartIcon 
-              className="absolute" 
+          {phase === 'menu' && (
+            <div className="determination-font text-white text-[32px] p-[20px] pl-[60px] leading-[1.2] select-none relative">
+              <HeartIcon x={20} y={30} />
+              * What will you do?
+            </div>
+          )}
+
+          {phase === 'attack' && (
+            <div className="w-full h-full relative overflow-hidden">
+              <HeartIcon x={vHeartPos.x - 32} y={vHeartPos.y - 250} />
+              {vBones.map(bone => (
+                <div 
+                  key={bone.id}
+                  className="absolute bg-white"
+                  style={{
+                    left: `${bone.x - 32}px`,
+                    top: `${bone.y - 250}px`,
+                    width: `${bone.width}px`,
+                    height: `${bone.height}px`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {phase === 'result' && (
+            <div className="w-full h-full flex flex-col items-center justify-center text-red-500 determination-font bg-black z-50">
+              <div className="text-[64px] font-bold">GAME OVER</div>
+              <div className="mt-4 text-white text-[24px]">Stay determined...</div>
+              <div 
+                className="mt-8 text-white cursor-pointer hover:text-yellow-400 text-[32px] border-4 border-white px-6 py-2"
+                onClick={() => { setPlayerHP(92); setPhase('dialogue'); setDialogueIndex(0); }}
+              >
+                RETRY
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Stats Bar */}
+        <div 
+          className="determination-font text-white select-none"
+          style={{
+            position: 'absolute',
+            left: '32px',
+            top: '400px',
+            width: '575px',
+            display: 'flex',
+            alignItems: 'baseline',
+            fontWeight: 'bold',
+          }}
+        >
+          <span className="text-[24px] mr-6">UT</span>
+          <span className="text-[20px] mr-8">LV 19</span>
+          <span className="text-[10px] mr-2 self-center">HP</span>
+          <div style={{ width: '115px', height: '21px', backgroundColor: '#f00', position: 'relative', marginRight: '16px', alignSelf: 'center' }}>
+            <div 
               style={{ 
-                left: `${vHeartPos.x}%`, 
-                top: `${vHeartPos.y}%`,
-                transform: 'translate(-50%, -50%) scale(1.5)'
+                width: `${(playerHP / maxHP) * 115}px`, 
+                height: '100%', 
+                backgroundColor: '#ff0' 
               }} 
             />
-
-            {/* Bones */}
-            {vBones.map(bone => (
-              <div 
-                key={bone.id}
-                className="absolute bg-white"
-                style={{
-                  left: `${bone.x}%`,
-                  top: `${bone.y}%`,
-                  width: `${bone.width}%`,
-                  height: `${bone.height}%`,
-                  border: '1px solid black'
-                }}
-              />
-            ))}
           </div>
-        )}
-
-        {phase === 'result' && (
-          <div className="w-full h-full flex flex-col items-center justify-center text-red-500 text-5xl font-bold determination-font">
-            GAME OVER
-            <button 
-              onClick={() => {
-                setPlayerHP(92);
-                setPhase('dialogue');
-                setDialogueIndex(0);
-              }}
-              className="mt-8 text-2xl text-white border-4 border-white px-8 py-3 hover:bg-white hover:text-black transition-all"
-            >
-              RETRY
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Player Stats Bar */}
-      <div className="w-full max-w-2xl flex items-center justify-start gap-4 mb-4 text-2xl determination-font font-bold">
-        <span className="mr-4">UT</span>
-        <span className="mr-8">LV 19</span>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold mr-1">HP</span>
-          <div className="hp-bar-bg">
-            <div 
-              className="hp-bar-fill transition-all duration-100" 
-              style={{ width: `${(playerHP / maxHP) * 100}%` }}
-            />
-          </div>
-          <span className="ml-2">{playerHP} / {maxHP}</span>
+          <span className="text-[24px]">{playerHP} / {maxHP}</span>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className={`w-full max-w-2xl grid grid-cols-4 gap-2 transition-opacity duration-300 ${phase === 'attack' || phase === 'result' ? 'opacity-30 pointer-events-none' : ''}`}>
+        {/* Action Buttons */}
         {menuOptions.map((option, i) => (
           <SansButton
             key={option}
             type={option}
             active={selectedMenu === i && phase === 'menu'}
-            onClick={() => handleMenuSelect(i)}
-            onMouseEnter={() => setSelectedMenu(i)}
+            x={menuXPositions[i]}
+            y={432}
           />
         ))}
-      </div>
 
-      {onBack && (
-        <button 
-          onClick={onBack}
-          className="mt-8 text-gray-500 hover:text-white transition-colors text-sm"
-        >
-          [ ESCAPE TO MENU ]
-        </button>
-      )}
+        {onBack && (
+          <div 
+            onClick={onBack}
+            className="absolute bottom-2 right-2 text-gray-700 hover:text-white cursor-pointer text-[12px] determination-font"
+          >
+            [ ESCAPE ]
+          </div>
+        )}
+      </div>
     </div>
   );
 }
