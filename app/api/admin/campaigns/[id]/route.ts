@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { type Campaign } from '@/lib/campaigns';
 
 // In-memory storage (in a real app, this would be a database)
-let campaigns: Campaign[] = [];
+const campaigns: Campaign[] = [];
 
 // GET /api/admin/campaigns/[id] - Get campaign details
 export async function GET(
